@@ -1,7 +1,13 @@
+using cr_app_webapi.Models;
+using cr_app_webapi.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
+builder.Services.Configure<CodeRedDatabaseSettings>(
+    builder.Configuration.GetSection("CodeRedDatabase")
+);
+builder.Services.AddSingleton<CodeRedServices>();
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
