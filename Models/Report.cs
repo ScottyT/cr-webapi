@@ -8,8 +8,7 @@ namespace cr_app_webapi.Models
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
-        [BsonElement("_id")]
-        public string? Id {get; set;}
+        public string? _id {get; set;}
         public int? __v {get; set;}
         public string JobId {get; set;} = null!;
         public string ReportType {get; set;} = null!;
@@ -30,7 +29,7 @@ namespace cr_app_webapi.Models
         public string signDate {get; set;} = null!;
         public string DateOfLoss {get; set;} = null!;
         public string ClaimNumber {get; set;} = null!;
-        public string ContactName {get; set;} = null!;
+        public Object? ContactName {get; set;}
         public string DateOfEvaluation {get; set;} = null!;
         public List<Object> evaluationLogs {get; set;} = new List<Object>();
         public List<Object> documentVerification {get; set;} = new List<Object>();
@@ -40,9 +39,9 @@ namespace cr_app_webapi.Models
         public string adjusterName {get; set;} = null!;
         public string adjusterEmail {get; set;} = null!;
         public string adjusterPhone {get; set;} = null!;
-        public string PropertyOwner {get; set;} = null!;
+        public Object? PropertyOwner {get; set;}
         public Object? ArrivalContactName {get; set;}
-        public List<Object> propertyChkList {get; set;} = new List<Object>();
+        public List<string> propertyChkList {get; set;} = new List<string>();
         public List<Object> intrusion {get; set;} = new List<Object>();
         public List<Object> Steps {get; set;} = new List<Object>();
         public List<Object> sourceWaterIntrusion {get; set;} = new List<Object>();

@@ -28,4 +28,15 @@ public class ReportsController : ControllerBase
     [HttpGet]
     public async Task<List<Report>> Get() =>
         await _reportsService.GetReportsAsync();
+
+    [HttpGet("{reportType}/{id}")]
+    public async Task<ActionResult<Report>> Get(string id, string reportType)
+    {
+        var report = await _reportsService.GetReportAsync(id, reportType);
+        if (report is null)
+        {
+            return NotFound();
+        }
+        return report;
+    }
 }

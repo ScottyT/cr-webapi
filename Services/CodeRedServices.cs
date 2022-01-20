@@ -20,6 +20,9 @@ namespace cr_app_webapi.Services
             await _employeesCollection.Find(_ => true).ToListAsync();
         public async Task<List<Report>> GetReportsAsync() =>
             await _reportCollection.Find(_ => true).ToListAsync();
+        
+        public async Task<Report?> GetReportAsync(string id, string reportType) =>
+            await _reportCollection.Find(x => x.JobId == id && x.ReportType == reportType).FirstOrDefaultAsync();
         public List<Report> GetReports() => _reportCollection.Find(report => true).ToList();
     }
 }
