@@ -6,6 +6,7 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using MongoDB.Bson.Serialization;
+using System.Text.Json;
 
 namespace cr_app_webapi.Services
 {
@@ -59,35 +60,41 @@ namespace cr_app_webapi.Services
         public async Task CreateDispatch(Dispatch report) =>
             await _dispatchCollection.InsertOneAsync(report);
 
-        public async Task Create(string reportType, Object report)
+        public async Task Create(string reportType, string report)
         {
+            if (report is "" && reportType is "")
+            {
+                return;
+            }
+            var time = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
             switch (reportType)
             {
                 case "dispatch":
-                    await _dispatchCollection.InsertOneAsync((Dispatch)report);
+                    var dRep = JsonSerializer.Deserialize<Dispatch>(report);
+                    if (dRep is null)
+                    {
+                        break;
+                    }
+                    dRep.createdAt = time;
+                    dRep.updatedAt = time;
+                    await _dispatchCollection.InsertOneAsync(dRep);
                     break;
                 case "rapid-response":
-                    await _reportCollection.InsertOneAsync((Report)report);
+                    
                     break;
             }
         }
-        public async Task Update(string reportType, string jobId, Object report)
+        public async Task Update(string reportType, string jobId)
         {
             switch (reportType)
             {
                 case "dispatch":
-                    await _dispatchCollection.ReplaceOneAsync(x => x.JobId == jobId && x.ReportType == reportType, (Dispatch)report);
+                    //await _dispatchCollection.ReplaceOneAsync(x => x.JobId == jobId && x.ReportType == reportType, (Dispatch)report);
+                    var time = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
+                    var update = Builders<Dispatch>.Update.Set("updatedAt", time);
+                    await _dispatchCollection.UpdateOneAsync(x => x.JobId == jobId && x.ReportType == reportType, update);
                     break;
             }
         }
-        /* public void MergeCollections()
-        {
-            //var merged = _employeesCollection.Aggregate().Lookup("reports", "JobId", "_id", "asReports").As<BsonDocument>().ToList();
-            Console.WriteLine(GetReports());
-            Console.WriteLine(GetE());
-            var emp = _employeesCollection.Find(_ => true).ToList();
-            var rep = _reportCollection.Find(_ => true).ToList();
-            rep.ForEach(item => emp.Add(item));
-        } */
     }
 }

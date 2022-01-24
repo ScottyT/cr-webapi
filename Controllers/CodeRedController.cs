@@ -1,10 +1,13 @@
 using cr_app_webapi.Models;
 using cr_app_webapi.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http.Extensions;
 using MongoDB.Bson;
 using System;
 using System.Text.Json;
 using System.Reflection;
+using System.Net;
+using System.Net.Http.Json;
 
 namespace cr_app_webapi.Controllers;
 
@@ -27,8 +30,13 @@ public class EmployeesController : ControllerBase
 public class ReportsController : ControllerBase
 {
     private readonly CodeRedServices _reportsService;
-    public ReportsController(CodeRedServices reportService) =>
+    private readonly IHttpContextAccessor _httpContextAccessor;
+    public ReportsController(CodeRedServices reportService, IHttpContextAccessor httpContextAccessor)
+    {
         _reportsService = reportService;
+        _httpContextAccessor = httpContextAccessor;
+    }
+    
     [HttpGet]
     public async Task<List<Report>> Get() =>
         await _reportsService.GetReports();
@@ -45,40 +53,44 @@ public class ReportsController : ControllerBase
         return report;
     }
 
-    [HttpPost("dispatch/new")]
-    public async Task<IActionResult> PostDispatch(Dispatch report)
+    [HttpPost("{reportType}/{jobid}/new")]
+    public async Task<IActionResult> Post([FromBody] Object report, string reportType, string jobid)
     {
-        report.createdAt = DateTime.Now;
-        report.updatedAt = DateTime.Now;
-        await _reportsService.Create("dispatch", report);
-        return CreatedAtAction(nameof(Get), new { _id = report.Id }, report);
+        switch (reportType)
+        {
+            case "dispatch":
+                var createdReport = JsonSerializer.Serialize(report);
+                var deserialized = JsonSerializer.Deserialize<Dispatch>(createdReport);
+                await _reportsService.Create(reportType, createdReport);
+                break;
+        }
+        
+       // return Created(domainName + "/" + reportType + "/" + jobid, report);
+       //return Created(domainName + "/" + reportType + "/" + jobid, "Successfully created new report!");
+       return CreatedAtAction(nameof(Get), "Successfully created report!");
     }
-
-    [HttpPut("dispatch/{jobId}/update")]
-    public async Task<IActionResult> UpdateDispatch(Dispatch updatedReport, string jobId)
+    [HttpPut("{reportType}/{jobId}/update")]
+    public async Task<IActionResult> UpdateDispatch(Object updatedReport, string jobId, string reportType)
     {
-        var report = await _reportsService.GetReport(jobId, "dispatch");
-        //Dispatch? fetchedReport = JsonSerializer.Deserialize<Dispatch>(report.ToJson());
+        object? report = await _reportsService.GetReport(jobId, reportType);
         if (report is null) 
         {
             return NotFound();
         }
-       /*  IList<System.Reflection.PropertyInfo> props = new List<System.Reflection.PropertyInfo>(report.GetType().GetProperties());
-        foreach (PropertyInfo prop in props)
+        
+        var emailProperty = updatedReport.GetType().GetProperty("emailAddress");
+        var modelType = report.GetType();
+        switch (reportType) 
         {
-            object? propValue = prop.GetValue(report, null);
-        } */
-        //var propertyInfo = report.GetType().GetProperty("")
-        updatedReport.updatedAt = DateTime.Now;
-        /* updatedReport.Id = fetchedReport.Id;
-        updatedReport.createdAt = fetchedReport.createdAt; */
-        await _reportsService.Update("dispatch", jobId, updatedReport);
+            case "containment-sheet":
+            case "tech-sheet":
+                
+                break;
+            default:
+                await _reportsService.Update(reportType, jobId);
+                break;
+        }
+        
         return NoContent();
-    }
-    [HttpPost("rapid-response/new")]
-    public async Task<IActionResult> PostRapidResponse([FromBody] Report report)
-    {
-        await _reportsService.Create("rapid-response", report);
-        return CreatedAtAction(nameof(GetReport), new { _id = report.Id }, report);
     }
 }

@@ -9,6 +9,8 @@ builder.Services.Configure<CodeRedDatabaseSettings>(
     builder.Configuration.GetSection("CodeRedDatabase")
 );
 builder.Services.AddSingleton<CodeRedServices>();
+//builder.Services.AddSingleton<IHttpContextAccessor>();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllers()
     .AddJsonOptions(
         options => options.JsonSerializerOptions.PropertyNamingPolicy = null
