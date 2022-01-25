@@ -1,13 +1,7 @@
 using cr_app_webapi.Models;
 using cr_app_webapi.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Http.Extensions;
-using MongoDB.Bson;
-using System;
 using System.Text.Json;
-using System.Reflection;
-using System.Net;
-using System.Net.Http.Json;
 
 namespace cr_app_webapi.Controllers;
 
@@ -56,14 +50,8 @@ public class ReportsController : ControllerBase
     [HttpPost("{reportType}/{jobid}/new")]
     public async Task<IActionResult> Post([FromBody] Object report, string reportType, string jobid)
     {
-        switch (reportType)
-        {
-            case "dispatch":
-                var createdReport = JsonSerializer.Serialize(report);
-                var deserialized = JsonSerializer.Deserialize<Dispatch>(createdReport);
-                await _reportsService.Create(reportType, createdReport);
-                break;
-        }
+        var createdReport = JsonSerializer.Serialize(report);
+        await _reportsService.Create(reportType, createdReport);
         
        // return Created(domainName + "/" + reportType + "/" + jobid, report);
        //return Created(domainName + "/" + reportType + "/" + jobid, "Successfully created new report!");

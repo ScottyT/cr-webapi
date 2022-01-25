@@ -1,11 +1,7 @@
 using cr_app_webapi.Models;
 using Microsoft.Extensions.Options;
-using MongoDB.Driver;
 using MongoDB.Bson;
-using System;
-using System.Linq;
-using System.Collections.Generic;
-using MongoDB.Bson.Serialization;
+using MongoDB.Driver;
 using System.Text.Json;
 
 namespace cr_app_webapi.Services
@@ -14,7 +10,10 @@ namespace cr_app_webapi.Services
     {
         private readonly IMongoCollection<Employee> _employeesCollection;
         private IMongoCollection<Report> _reportCollection;
-        private IMongoCollection<Dispatch> _dispatchCollection;
+        private IMongoCollection<BsonDocument> _repCollection;
+        private IMongoCollection<Dispatch> _dispatch;
+        private IMongoCollection<RapidResponse> _rapidResponse;
+        private IMongoCollection<CaseFile> _caseFiles;
         private IMongoDatabase _database;
         public CodeRedServices(IOptions<CodeRedDatabaseSettings> settings)
         {
@@ -22,7 +21,11 @@ namespace cr_app_webapi.Services
             _database = client.GetDatabase(settings.Value.DatabaseName);
             _employeesCollection = _database.GetCollection<Employee>("employees");
             _reportCollection = _database.GetCollection<Report>("reports");
-            _dispatchCollection = _database.GetCollection<Dispatch>("reports");
+            _repCollection = _database.GetCollection<BsonDocument>("reports");
+
+            _dispatch = _database.GetCollection<Dispatch>("reports");
+            _rapidResponse = _database.GetCollection<RapidResponse>("reports");
+            _caseFiles = _database.GetCollection<CaseFile>("reports");
         }
 
         public async Task<List<Employee>> GetEmployees() => 
@@ -47,18 +50,20 @@ namespace cr_app_webapi.Services
         
         public async Task<Object?> GetReport(string id, string reportType)
         {
-            Object report = new object();
-            switch (reportType) 
+            var filters = (Builders<BsonDocument>.Filter.Eq("JobId", id) & Builders<BsonDocument>.Filter.Eq("ReportType", reportType));
+            var ObjectsList = await _repCollection.Find(filters).FirstOrDefaultAsync();
+            /* switch (reportType) 
             {
                 case "dispatch":
-                    report = await _dispatchCollection.Find(x => x.JobId == id && x.ReportType == reportType).FirstOrDefaultAsync();
+                    report = await _reportCollection.Find(x => x.JobId == id && x.ReportType == reportType).FirstOrDefaultAsync();
                     break;
-            }
-            return report;
+            } */
+            //ObjectsList.Select(v => (BsonValue)(ObjectId)v).ToList();
+            return ObjectsList.ToJson();
         }
 
         public async Task CreateDispatch(Dispatch report) =>
-            await _dispatchCollection.InsertOneAsync(report);
+            await _dispatch.InsertOneAsync(report);
 
         public async Task Create(string reportType, string report)
         {
@@ -71,28 +76,39 @@ namespace cr_app_webapi.Services
             {
                 case "dispatch":
                     var dRep = JsonSerializer.Deserialize<Dispatch>(report);
-                    if (dRep is null)
-                    {
-                        break;
-                    }
+                    if (dRep is null) break;
                     dRep.createdAt = time;
                     dRep.updatedAt = time;
-                    await _dispatchCollection.InsertOneAsync(dRep);
+                    await _dispatch.InsertOneAsync(dRep);
                     break;
                 case "rapid-response":
-                    
+                    var rapidRep = JsonSerializer.Deserialize<RapidResponse>(report);
+                    if (rapidRep is null) break;
+                    rapidRep.createdAt = time;
+                    rapidRep.updatedAt = time;
+                    await _rapidResponse.InsertOneAsync(rapidRep);
+                    break;
+                case "containment-sheet":
+                case "tech-sheet":
+                    var caseFileRep = JsonSerializer.Deserialize<CaseFile>(report);
+                    if (caseFileRep is null) break;
+                    caseFileRep.createdAt = time;
+                    caseFileRep.updatedAt = time;
+                    await _caseFiles.InsertOneAsync(caseFileRep);
                     break;
             }
         }
         public async Task Update(string reportType, string jobId)
         {
+            var time = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
             switch (reportType)
             {
-                case "dispatch":
-                    //await _dispatchCollection.ReplaceOneAsync(x => x.JobId == jobId && x.ReportType == reportType, (Dispatch)report);
-                    var time = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
+                case "containment-sheet":
+                case "tech-sheet":
+                    //await _dispatch.ReplaceOneAsync(x => x.JobId == jobId && x.ReportType == reportType, (Dispatch)report);
+                    
                     var update = Builders<Dispatch>.Update.Set("updatedAt", time);
-                    await _dispatchCollection.UpdateOneAsync(x => x.JobId == jobId && x.ReportType == reportType, update);
+                    await _dispatch.UpdateOneAsync(x => x.JobId == jobId && x.ReportType == reportType, update);
                     break;
             }
         }

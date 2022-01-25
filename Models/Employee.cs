@@ -16,6 +16,7 @@ namespace cr_app_webapi.Models
         public DateTime createdAt {get; set;}
         public DateTime updatedAt {get; set;}
         public int __v {get; set;}
+        // Might change certifications to be defined as Certification type
         public List<Object> certifications {get; set;} = new List<Object>();
         public List<Object> UserReports {get; set;} = new List<Object>();
     }

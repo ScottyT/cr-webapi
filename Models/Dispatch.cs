@@ -25,9 +25,8 @@ namespace cr_app_webapi.Models
         public Object? teamMember {get; set;}
         public string? signDate {get; set;}
         public string? signTime {get; set;}
+        public string? id {get; set;}
         public DateTime createdAt {get; set;}
         public DateTime updatedAt {get; set;}
-
-        //public Dispatch() { }
     }
 }

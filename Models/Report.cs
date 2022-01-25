@@ -8,7 +8,7 @@ namespace cr_app_webapi.Models
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
-        public string? Id {get; set;}
+        public string? _id {get; set;}
         /* [BsonElement("ts")]
         [BsonRepresentation(BsonType.Timestamp)]
         public DateTime Timestamp {get; set;} */
