@@ -1,3 +1,4 @@
+using cr_app_webapi.Middleware;
 using cr_app_webapi.Models;
 using cr_app_webapi.Services;
 using Microsoft.Extensions.Options;
@@ -8,7 +9,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.Configure<CodeRedDatabaseSettings>(
     builder.Configuration.GetSection("CodeRedDatabase")
 );
+builder.Services.Configure<AuthSettings>(
+    builder.Configuration.GetSection("Auth")
+);
 builder.Services.AddSingleton<CodeRedServices>();
+builder.Services.AddSingleton<AuthServices>();
 //builder.Services.AddSingleton<IHttpContextAccessor>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllers()
@@ -19,6 +24,9 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Configuration.AddEnvironmentVariables();
+
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -27,10 +35,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-//app.UseHttpsRedirection();
-
-//app.UseAuthorization();
+app.UseAuth();
+app.UseHttpsRedirection();
 
 app.MapControllers();
 

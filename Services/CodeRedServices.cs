@@ -32,33 +32,12 @@ namespace cr_app_webapi.Services
             await _employeesCollection.Find(_ => true).ToListAsync();
         public async Task<List<Report>> GetReports() =>
             await _reportCollection.Find(_ => true).ToListAsync();
-
-        /* public async Task<List<Object>> Get()
-        {
-            var rep = await GetReports();
-            var dispatch = await _dispatchCollection.Find(_ => true).ToListAsync();
-            var emp = await GetEmployees();
-            var arge = _reportCollection.Aggregate()
-                .Lookup("reports", "_id", "_id", "Reports").Lookup("employees", "_id", "teamMember", "Employees");
-            //List<object> result = rep.Cast<object>().Concat(dispatch).ToList();
-            List<object> result = (from x in rep select(object)x).ToList();
-            result.AddRange((from x in dispatch select (object)x).ToList());
-            result.AddRange((from x in emp select (object)x).ToList());
-            
-            return result;
-        } */
         
         public async Task<Object?> GetReport(string id, string reportType)
         {
             var filters = (Builders<BsonDocument>.Filter.Eq("JobId", id) & Builders<BsonDocument>.Filter.Eq("ReportType", reportType));
             var ObjectsList = await _repCollection.Find(filters).FirstOrDefaultAsync();
-            /* switch (reportType) 
-            {
-                case "dispatch":
-                    report = await _reportCollection.Find(x => x.JobId == id && x.ReportType == reportType).FirstOrDefaultAsync();
-                    break;
-            } */
-            //ObjectsList.Select(v => (BsonValue)(ObjectId)v).ToList();
+            
             return ObjectsList.ToJson();
         }
 
