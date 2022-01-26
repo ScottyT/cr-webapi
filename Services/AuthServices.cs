@@ -10,7 +10,6 @@ namespace cr_app_webapi.Services
     {
         private string? cred;
         private string? projectId;
-        //private readonly FirebaseApp _firebaseApp;
         private readonly FirebaseAuth _auth;
 
         public AuthServices(IOptions<AuthSettings> settings)
