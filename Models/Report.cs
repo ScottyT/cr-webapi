@@ -16,7 +16,7 @@ namespace cr_app_webapi.Models
         public string? ReportType {get; set;}
         public string? formType {get; set;}
         public Object? teamMember {get; set;}
-        public string? timeFormatted {get; set;}
+        /* public string? timeFormatted {get; set;}
         public string? callTimeUpdate {get; set;}
         public Boolean teamMemberSig {get; set;}
         public string? signDate {get; set;}
@@ -73,6 +73,6 @@ namespace cr_app_webapi.Models
         public string? Customer {get; set;}
         public string? Technician {get; set;}
         public List<object> categoryData {get; set;} = new List<object>();
-        public Object? groupedData {get; set;}
+        public Object? groupedData {get; set;} */
     }
 }

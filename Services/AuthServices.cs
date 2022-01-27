@@ -19,7 +19,7 @@ namespace cr_app_webapi.Services
 
             var defaultApp = FirebaseApp.Create(new AppOptions()
             {
-                Credential = GoogleCredential.FromFile("./code-red.json"),
+                Credential = GoogleCredential.FromFile(cred),
                 ProjectId = projectId
             });
             _auth = FirebaseAuth.GetAuth(defaultApp);
