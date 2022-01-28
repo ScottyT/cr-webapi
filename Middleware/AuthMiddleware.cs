@@ -29,7 +29,6 @@ public class AuthMiddleware
         {
             await HandleAuthError(context, ex);
         }
-        
     }
 
     private async Task HandleAuthError(HttpContext context, Exception ex)

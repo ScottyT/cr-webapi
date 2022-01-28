@@ -1,5 +1,6 @@
 using cr_app_webapi.Models;
 using cr_app_webapi.Services;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 
@@ -21,14 +22,13 @@ public class EmployeesController : ControllerBase
 
 [ApiController]
 [Route("api/[controller]")]
+
 public class ReportsController : ControllerBase
 {
     private readonly CodeRedServices _reportsService;
-    private readonly IHttpContextAccessor _httpContextAccessor;
-    public ReportsController(CodeRedServices reportService, IHttpContextAccessor httpContextAccessor)
+    public ReportsController(CodeRedServices reportService)
     {
         _reportsService = reportService;
-        _httpContextAccessor = httpContextAccessor;
     }
     
     [HttpGet]
@@ -46,7 +46,13 @@ public class ReportsController : ControllerBase
         }
         return report;
     }
-
+    
+    [HttpGet("{email}/employee")]
+    public async Task<List<Report>> GetUserReports(string email)
+    {
+        var reports = await _reportsService.UserReports(email);
+        return reports;
+    }
     [HttpPost("{reportType}/{jobid}/new")]
     public async Task<IActionResult> Post([FromBody] Object report, string reportType, string jobid)
     {

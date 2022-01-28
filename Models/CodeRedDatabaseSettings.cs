@@ -1,4 +1,3 @@
-using FirebaseAdmin.Auth;
 namespace cr_app_webapi.Models
 {
 
@@ -10,7 +9,8 @@ namespace cr_app_webapi.Models
     }
     public class AuthSettings
     {
-        public string? CredentialPath {get; set;}
+        public string? DevCredentialPath {get; set;}
+        public string? ProdCredentialPath {get; set;}
         public string? ProjectId {get; set;}
     }
 

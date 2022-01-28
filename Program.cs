@@ -1,9 +1,12 @@
 using cr_app_webapi.Middleware;
 using cr_app_webapi.Models;
 using cr_app_webapi.Services;
-using Microsoft.Extensions.Options;
 
+var MyCorsPolicy = "corsPolicy";
 var builder = WebApplication.CreateBuilder(args);
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8082";
+var url = $"http://localhost:{port}";
+var appUrl = Environment.GetEnvironmentVariable("APP_URL") ?? "http://localhost:3000";
 
 // Add services to the container.
 builder.Services.Configure<CodeRedDatabaseSettings>(
@@ -14,8 +17,17 @@ builder.Services.Configure<AuthSettings>(
 );
 builder.Services.AddSingleton<CodeRedServices>();
 builder.Services.AddSingleton<AuthServices>();
-//builder.Services.AddSingleton<IHttpContextAccessor>();
-builder.Services.AddHttpContextAccessor();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: MyCorsPolicy, 
+    builder => 
+    {
+        builder.WithOrigins("http://localhost:3000")
+            .AllowCredentials()
+            .WithHeaders("Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization")
+            .WithMethods("OPTIONS", "GET", "POST", "PUT", "DELETE");
+    });
+});
 builder.Services.AddControllers()
     .AddJsonOptions(
         options => options.JsonSerializerOptions.PropertyNamingPolicy = null
@@ -24,18 +36,16 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-
 var app = builder.Build();
-
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+app.UseHttpsRedirection();
+app.UseRouting();
+app.UseCors(MyCorsPolicy);
 app.UseAuth();
-//app.UseHttpsRedirection();
-
 app.MapControllers();
-
-app.Run();
+app.Run(url);

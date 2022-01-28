@@ -33,6 +33,8 @@ namespace cr_app_webapi.Services
         public async Task<List<Report>> GetReports() =>
             await _reportCollection.Find(_ => true).ToListAsync();
         
+        public async Task<List<Report>> UserReports(string email) =>
+            await _reportCollection.Find(r => r.teamMember.email == email).ToListAsync();
         public async Task<Object?> GetReport(string id, string reportType)
         {
             var filters = (Builders<BsonDocument>.Filter.Eq("JobId", id) & Builders<BsonDocument>.Filter.Eq("ReportType", reportType));

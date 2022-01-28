@@ -15,7 +15,8 @@ namespace cr_app_webapi.Models
         public string JobId {get; set;} = null!;
         public string? ReportType {get; set;}
         public string? formType {get; set;}
-        public Object? teamMember {get; set;}
+        public TeamMember teamMember {get; set;} = new TeamMember();
+        public string? date {get; set;}
         /* public string? timeFormatted {get; set;}
         public string? callTimeUpdate {get; set;}
         public Boolean teamMemberSig {get; set;}
@@ -48,7 +49,7 @@ namespace cr_app_webapi.Models
         public string? initial2 {get; set;}
         public string? initial3 {get; set;}
         public string? initial4 {get; set;}
-        public string? date {get; set;}
+        
         public List<Object> selectedTmpRepairs {get; set;} = new List<Object>();
         public List<Object> selectedContent {get; set;} = new List<Object>();
         public List<Object> selectedStructualCleaning {get; set;} = new List<Object>();

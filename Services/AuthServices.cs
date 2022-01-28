@@ -14,7 +14,8 @@ namespace cr_app_webapi.Services
 
         public AuthServices(IOptions<AuthSettings> settings)
         {
-            cred = settings.Value.CredentialPath;
+            cred = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development" ?
+                settings.Value.DevCredentialPath : settings.Value.ProdCredentialPath;
             projectId = settings.Value.ProjectId;
 
             var defaultApp = FirebaseApp.Create(new AppOptions()
