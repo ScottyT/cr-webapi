@@ -47,6 +47,17 @@ public class ReportsController : ControllerBase
         return report;
     }
     
+    [HttpGet("{reportType}/{id}/certificate")]
+    public ActionResult<CertificateOfCompletion> GetCertReport(string id, string reportType)
+    {
+        var report = _reportsService.GetCertContract(reportType, id).FirstOrDefault();
+        if (report is null)
+        {
+            return NoContent();
+        }
+        report.Cert.creditCard = report.creditCard;
+        return report.Cert;
+    }
     [HttpGet("{email}/employee")]
     public async Task<List<Report>> GetUserReports(string email)
     {

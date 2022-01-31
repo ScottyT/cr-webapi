@@ -6,6 +6,14 @@ using System.Text.Json;
 
 namespace cr_app_webapi.Services
 {
+    public class Pair<TFirst, TSecond>
+    {
+        public TFirst First { get; }
+        public TSecond Second { get; }
+        
+        public Pair(TFirst first, TSecond second) => 
+            (First, Second) = (first, second);
+    }
     public class CodeRedServices
     {
         private readonly IMongoCollection<Employee> _employeesCollection;
@@ -14,18 +22,22 @@ namespace cr_app_webapi.Services
         private IMongoCollection<Dispatch> _dispatch;
         private IMongoCollection<RapidResponse> _rapidResponse;
         private IMongoCollection<CaseFile> _caseFiles;
+        private IMongoCollection<CertificateOfCompletion> _certificate;
+        private IMongoCollection<CreditCard> _creditCard;
         private IMongoDatabase _database;
         public CodeRedServices(IOptions<CodeRedDatabaseSettings> settings)
         {
             var client = new MongoClient(settings.Value.ConnectionString);
             _database = client.GetDatabase(settings.Value.DatabaseName);
             _employeesCollection = _database.GetCollection<Employee>("employees");
+            _creditCard = _database.GetCollection<CreditCard>("credit-cards");
             _reportCollection = _database.GetCollection<Report>("reports");
             _repCollection = _database.GetCollection<BsonDocument>("reports");
 
             _dispatch = _database.GetCollection<Dispatch>("reports");
             _rapidResponse = _database.GetCollection<RapidResponse>("reports");
             _caseFiles = _database.GetCollection<CaseFile>("reports");
+            _certificate = _database.GetCollection<CertificateOfCompletion>("reports");
         }
 
         public async Task<List<Employee>> GetEmployees() => 
@@ -41,6 +53,22 @@ namespace cr_app_webapi.Services
             var ObjectsList = await _repCollection.Find(filters).FirstOrDefaultAsync();
             
             return ObjectsList.ToJson();
+        }
+
+        //Eventually want to make these services into one service instead of multiple by using a generic type in dictionary.
+        public List<Certificate> GetCertContract(string reportType, string id)
+        {
+            var cardCol = _database.GetCollection<CreditCard>("credit-cards");
+            var certs = _database.GetCollection<CertificateOfCompletion>("reports");
+            var certQuery = (from cert in certs.AsQueryable().AsEnumerable()
+                            join card in cardCol.AsQueryable() on
+                            cert.card_id equals card.cardNumber
+                            select new Certificate
+                            {
+                                Cert = cert,
+                                creditCard = card
+                            }).ToList();
+            return certQuery;
         }
 
         public async Task CreateDispatch(Dispatch report) =>
@@ -76,6 +104,13 @@ namespace cr_app_webapi.Services
                     caseFileRep.createdAt = time;
                     caseFileRep.updatedAt = time;
                     await _caseFiles.InsertOneAsync(caseFileRep);
+                    break;
+                case "wesi-coc":
+                    var coc = JsonSerializer.Deserialize<CertificateOfCompletion>(report);
+                    if (coc is null) break;
+                    coc.createdAt = time;
+                    coc.updatedAt = time;
+                    await _certificate.InsertOneAsync(coc);
                     break;
             }
         }
