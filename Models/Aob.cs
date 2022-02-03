@@ -2,7 +2,9 @@ using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace cr_app_webapi.Models;
-public class Aob
+
+[BsonIgnoreExtraElements]
+public class AssignmentOfBenefits
 {
     [BsonId]
     [BsonRepresentation(BsonType.ObjectId)]
@@ -46,10 +48,20 @@ public class Aob
     public string? numberOfRooms {get; set;}
     public string? numberOfFloors {get; set;}
     public Object? teamMember {get; set;}
-    public string? cardNumber {get; set;}
     public string? paymentOption {get; set;}
     public string? cusSign2 {get; set;}
     public string? cusSignDate2 {get; set;}
+    [BsonElement("cardNumber")]
+    public string? cardNumber {get; set;}
+    [BsonIgnore]
+    public CreditCard creditCard {get; set;} = new CreditCard();
     public DateTime createdAt {get; set;}
     public DateTime updatedAt {get; set;}
+}
+
+[BsonIgnoreExtraElements]
+public class Aob
+{
+    public AssignmentOfBenefits AOB {get; set;} = new AssignmentOfBenefits();
+    public CreditCard? creditCard {get; set;}
 }

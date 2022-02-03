@@ -30,6 +30,7 @@ public class CertificateOfCompletion
     public string? testimonial {get; set;}
     public string? paymentOption {get; set;}
     public string? card_id {get; set;}
+    [BsonIgnore]
     public CreditCard creditCard {get; set;} = new CreditCard();
     public DateTime createdAt {get; set;}
     public DateTime updatedAt {get; set;}

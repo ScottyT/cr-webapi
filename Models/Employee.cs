@@ -1,8 +1,8 @@
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
-namespace cr_app_webapi.Models
-{
+namespace cr_app_webapi.Models;
+[BsonIgnoreExtraElements]
     public class Employee
     {
         [BsonId]
@@ -15,9 +15,18 @@ namespace cr_app_webapi.Models
         public string role {get; set;} = null!;
         public DateTime createdAt {get; set;}
         public DateTime updatedAt {get; set;}
-        public int __v {get; set;}
         // Might change certifications to be defined as Certification type
-        public List<Object> certifications {get; set;} = new List<Object>();
+        public List<string> certifications_id {get; set;} = new List<string>();
         public List<Object> UserReports {get; set;} = new List<Object>();
     }
-}
+
+    public class Certification
+    {
+        [BsonId]
+        [BsonRepresentation(BsonType.ObjectId)]
+        public string? _id {get; set;}
+        public string? idNumber {get; set;}
+        public string? description {get; set;}
+        public string? expiration {get; set;}
+        public Object? badge {get; set;}
+    }
