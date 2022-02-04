@@ -19,8 +19,8 @@ builder.Services.AddSingleton<CodeRedServices>();
 builder.Services.AddSingleton<AuthServices>();
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(name: MyCorsPolicy, 
-    builder => 
+    options.AddPolicy(name: MyCorsPolicy,
+    builder =>
     {
         builder.WithOrigins("http://localhost:3000")
             .AllowCredentials()
@@ -35,18 +35,35 @@ builder.Services.AddControllers()
 builder.Services.AddHttpContextAccessor();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(config =>
+{
+    config.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    {
+        Title = "CodeRedApp",
+        Version = "v1",
+    });
+});
 
 var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    /* app.UseSwagger();
+    app.UseSwaggerUI(); */
+    app.UseDeveloperExceptionPage();
 }
+app.UseSwagger();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "CodeRedApp");
+});
 app.UseHttpsRedirection();
 app.UseRouting();
 app.UseCors(MyCorsPolicy);
 //app.UseAuth();
-app.MapControllers();
-app.Run(url);
+app.UseAuthorization();
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapControllers();
+});
+app.Run();
