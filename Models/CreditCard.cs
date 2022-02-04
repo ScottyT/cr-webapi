@@ -8,7 +8,6 @@ public class CreditCard
     [BsonId]
     [BsonRepresentation(BsonType.ObjectId)]
     public string? _id {get; set;}
-    public string? JobId {get; set;}
     public string? ReportType {get; set;}
     public Object? cardholderInfo {get; set;}
     public Object? billingAddressFirst {get; set;}
