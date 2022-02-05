@@ -4,9 +4,9 @@ using cr_app_webapi.Services;
 
 var MyCorsPolicy = "corsPolicy";
 var builder = WebApplication.CreateBuilder(args);
-var port = Environment.GetEnvironmentVariable("PORT") ?? "8082";
+/* var port = Environment.GetEnvironmentVariable("PORT") ?? "8082";
 var url = $"http://localhost:{port}";
-var appUrl = Environment.GetEnvironmentVariable("APP_URL") ?? "http://localhost:3000";
+var appUrl = Environment.GetEnvironmentVariable("APP_URL") ?? "http://localhost:3000"; */
 
 // Add services to the container.
 builder.Services.Configure<CodeRedDatabaseSettings>(
