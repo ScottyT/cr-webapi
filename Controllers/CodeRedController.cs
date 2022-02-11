@@ -1,23 +1,36 @@
 using cr_app_webapi.Models;
 using cr_app_webapi.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using RestSharp;
 using System.Text.Json;
+using System.Threading;
+using System.Web;
 
 namespace cr_app_webapi.Controllers;
+public interface QueryModel
+{
+    string? id {get; set;}
+}
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize("read:users")]
 public class EmployeesController : ControllerBase
 {
     private readonly CodeRedServices _employeesService;
-    public EmployeesController(CodeRedServices empService) =>
+    private AuthServices _authService;
+    public EmployeesController(CodeRedServices empService, AuthServices authService)
+    {
         _employeesService = empService;
+        _authService = authService;
+    }
 
     [HttpGet]
     public async Task<List<Employee>> Get() =>
         await _employeesService.GetEmployees();
     
-    [HttpGet("{teamid}")]
+    /* [HttpGet("{teamid}")]
     public async Task<ActionResult<Employee>> Get(string teamid)
     {
         var employee = await _employeesService.GetEmployee(teamid);
@@ -26,8 +39,17 @@ public class EmployeesController : ControllerBase
             return NotFound();
         }
         return employee;
-    }
+    } */
     
+    [HttpGet("{email}")]
+    public async Task<ActionResult<Object>> GetUser(string email, string id)
+    {
+        Console.WriteLine(id);
+        /* Uri myUri = new Uri("http://localhost:8082/api/employees/" + userprofile);
+        Console.WriteLine(HttpUtility.ParseQueryString(myUri.Query).Get()); */
+        return await _authService.GetUser(id);
+    }
+
     [HttpPost("create")]
     public async Task<IActionResult> CreateUser(Employee newEmployee)
     {
@@ -39,19 +61,26 @@ public class EmployeesController : ControllerBase
 
 [ApiController]
 [Route("api/[controller]")]
-
+[Authorize("read:reports")]
 public class ReportsController : ControllerBase
 {
     private readonly CodeRedServices _reportsService;
-    public ReportsController(CodeRedServices reportService)
+    private AuthServices _authService;
+    
+    public ReportsController(CodeRedServices reportService, AuthServices authService)
     {
+        _authService = authService;
         _reportsService = reportService;
     }
+
+    /* public async Task<string> AccessToken() =>
+        await _auth0services.GetToken(); */
     
     [HttpGet]
-    public async Task<List<Report>> Get() =>
-        await _reportsService.GetReports();
-        
+    public async Task<List<Report>> Get()
+    {
+        return await _reportsService.GetReports();
+    }
 
     [HttpGet("{reportType}/{id}")]
     public async Task<ActionResult<Object>> GetReport(string id, string reportType)

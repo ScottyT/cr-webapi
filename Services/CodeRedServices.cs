@@ -4,11 +4,6 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using System.Text.Json;
 using System.Dynamic;
-using System.Collections.Generic;
-using System.Linq;
-using MongoDB.Bson.IO;
-using MongoDB.Bson.Serialization;
-using MongoDB.Bson.Serialization.Serializers;
 
 namespace cr_app_webapi.Services
 {
