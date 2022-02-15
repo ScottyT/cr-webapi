@@ -1,7 +1,17 @@
+using cr_app_webapi.Models;
+using JwtAuthentication.AsymmetricEncryption.Certificates;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Options;
 
 public class HasScopeHandler : AuthorizationHandler<HasScopeRequirement>
 {
+    private readonly SigningAudienceCertificate signingAudienceCertificate;
+
+    public HasScopeHandler(IConfiguration config, IOptions<Auth0Settings> settings)
+    {
+        signingAudienceCertificate = new SigningAudienceCertificate();
+    }
+
     protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, HasScopeRequirement requirement)
     {
         var user = context.User;

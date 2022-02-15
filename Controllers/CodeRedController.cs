@@ -8,10 +8,6 @@ using System.Threading;
 using System.Web;
 
 namespace cr_app_webapi.Controllers;
-public interface QueryModel
-{
-    string? id {get; set;}
-}
 
 [ApiController]
 [Route("api/[controller]")]
@@ -27,8 +23,10 @@ public class EmployeesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<List<Employee>> Get() =>
-        await _employeesService.GetEmployees();
+    public async Task<List<Employee>> Get()
+    {
+        return await _employeesService.GetEmployees();
+    }
     
     /* [HttpGet("{teamid}")]
     public async Task<ActionResult<Employee>> Get(string teamid)
@@ -44,10 +42,14 @@ public class EmployeesController : ControllerBase
     [HttpGet("{email}")]
     public async Task<ActionResult<Object>> GetUser(string email, string id)
     {
-        Console.WriteLine(id);
-        /* Uri myUri = new Uri("http://localhost:8082/api/employees/" + userprofile);
-        Console.WriteLine(HttpUtility.ParseQueryString(myUri.Query).Get()); */
-        return await _authService.GetUser(id);
+        var context = HttpContext.Request;
+        var user = await _authService.GetUser(id);
+        if (user.Content is null)
+        {
+            return NotFound();
+        }
+        var content = JsonSerializer.Deserialize<Object>(user.Content);
+        return content;
     }
 
     [HttpPost("create")]

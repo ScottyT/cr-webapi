@@ -1,12 +1,10 @@
 using System.Security.Claims;
-using cr_app_webapi;
-using cr_app_webapi.Middleware;
 using cr_app_webapi.Models;
 using cr_app_webapi.Services;
+using JwtAuthentication.AsymmetricEncryption.Certificates;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
-using RestSharp.Authenticators;
 
 var MyCorsPolicy = "corsPolicy";
 var builder = WebApplication.CreateBuilder(args);
@@ -14,19 +12,23 @@ var port = Environment.GetEnvironmentVariable("PORT") ?? "8082";
 var url = $"http://localhost:{port}";
 var appUrl = Environment.GetEnvironmentVariable("APP_URL") ?? "http://localhost:3000";
 
-
+var issuerSigningCertificate = new SigningIssuerCertificate();
+RsaSecurityKey issuerSigningKey = issuerSigningCertificate.GetIssuerSigningKey();
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 }).AddJwtBearer(options => 
 {
+    options.SaveToken = true;
     options.Authority = builder.Configuration["Auth0:Authority"];
     options.Audience = builder.Configuration["Auth0:Audience"];
     options.TokenValidationParameters = new TokenValidationParameters
     {
-        NameClaimType = ClaimTypes.NameIdentifier
+        NameClaimType = ClaimTypes.NameIdentifier,
+        IssuerSigningKey = issuerSigningKey
     };
+    
 });
 builder.Services.AddAuthorization(options =>
 {
@@ -38,11 +40,12 @@ builder.Services.AddAuthorization(options =>
 builder.Services.Configure<CodeRedDatabaseSettings>(
     builder.Configuration.GetSection("CodeRedDatabase")
 );
+builder.Services.Configure<Auth0Settings>(
+    builder.Configuration.GetSection("Auth0")
+);
 builder.Services.AddSingleton<CodeRedServices>();
 builder.Services.AddSingleton<AuthServices>();
 builder.Services.AddSingleton<IAuthorizationHandler, HasScopeHandler>();
-
-//builder.Services.AddTransient<AuthenticatorBase, Auth0Authenticator>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: MyCorsPolicy,
@@ -54,8 +57,6 @@ builder.Services.AddCors(options =>
             .WithMethods("OPTIONS", "GET", "POST", "PUT", "DELETE");
     });
 });
-
-
 
 builder.Services.AddControllers()
     .AddJsonOptions(
@@ -72,12 +73,6 @@ builder.Services.AddSwaggerGen(config =>
         Version = "v1",
     });
 });
-/* builder.Services.AddSingleton<IAuth0Client>(
-    new Auth0Client(
-        builder.Configuration["Auth0:ClientId"],
-        builder.Configuration["Auth0:ClientSecret"]
-    )
-); */
 var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

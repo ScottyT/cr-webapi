@@ -3,7 +3,6 @@ using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using System.Text.Json;
-using System.Dynamic;
 
 namespace cr_app_webapi.Services
 {
@@ -47,15 +46,6 @@ namespace cr_app_webapi.Services
             _psychrometric = _database.GetCollection<Psychrometric>("reports");
         }
 
-        public void AddProperty(ExpandoObject expando, string propertyName, object propertyValue)
-        {
-            var exDict = expando as IDictionary<string, object>;
-            if (exDict.ContainsKey(propertyName))
-                exDict[propertyName] = propertyValue;
-            else
-            exDict.Add(propertyName, propertyValue);
-        }
-
         // Employee section
         public async Task<List<Employee>> GetEmployees() => 
             await _employeesCollection.Find(_ => true).ToListAsync();
@@ -84,7 +74,9 @@ namespace cr_app_webapi.Services
             await _certification.Find(x => x._id == id).FirstOrDefaultAsync();
         public async Task<List<Certification>> GetCertifications() =>
             await _certification.Find(_ => true).ToListAsync();
-        // Reports section
+        // ------- End Employee Section ----- //
+
+        // Reports section //
         public async Task<List<Report>> GetReports() =>
             await _reportCollection.Find(_ => true).ToListAsync();
         
@@ -230,7 +222,8 @@ namespace cr_app_webapi.Services
             Psychrometric? rep = JsonSerializer.Deserialize<Psychrometric>(reportJson);
             var jobProgress = doc.Elements.Where(el => el.Name == "jobProgress").FirstOrDefault();
             if (rep is null) return;
-            var filters = (Builders<BsonDocument>.Filter.Eq("JobId", report.JobId) & Builders<BsonDocument>.Filter.Eq("ReportType", report.ReportType));
+            var filters = (Builders<BsonDocument>.Filter.Eq("JobId", report.JobId) & Builders<BsonDocument>.Filter.Eq("ReportType", report.ReportType)
+                & Builders<BsonDocument>.Filter.Eq("formType", report.formType));
             var existingReport = _repCollection.Find(filters).FirstOrDefault();
             
             switch (action)
