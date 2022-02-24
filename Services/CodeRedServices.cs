@@ -82,12 +82,24 @@ namespace cr_app_webapi.Services
         
         public async Task<List<Report>> UserReports(string email) =>
             await _reportCollection.Find(r => r.teamMember.email == email).ToListAsync();
-        public async Task<Object?> GetReport(string id, string reportType)
+        public async Task<object> GetReport(string id, string reportType)
         {
-            var filters = (Builders<BsonDocument>.Filter.Eq("JobId", id) & Builders<BsonDocument>.Filter.Eq("ReportType", reportType));
-            var ObjectsList = await _repCollection.Find(filters).FirstOrDefaultAsync();
+            List<object> returnList = new List<object>();
+            object rep = await _reportCollection.Find(x => x.JobId == id && x.ReportType == reportType).As<object>().FirstOrDefaultAsync();
+           /*  var filters = (Builders<BsonDocument>.Filter.Eq("JobId", id) & Builders<BsonDocument>.Filter.Eq("ReportType", reportType));
+            var ObjectsList = await _repCollection.Find(filters).FirstOrDefaultAsync(); */
+            if (reportType.Contains("dispatch"))
+            {
+                /* var d = (from dispatch in _dispatch.AsQueryable().AsEnumerable().Where(x => x.JobId == id && x.ReportType == reportType)
+                    select new DispatchResponse
+                    {
+                        dispatch = dispatch
+                    });
+                returnList = d.Cast<object>().ToList(); */
+            }
+            //var reportAsBytes = ObjectsList.AsByteArray;
             
-            return ObjectsList.ToJson();
+            return rep;
         }
 
         public List<Object> GetContract(string reportType, string id)

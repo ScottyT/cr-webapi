@@ -5,6 +5,7 @@ using JwtAuthentication.AsymmetricEncryption.Certificates;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 
 var MyCorsPolicy = "corsPolicy";
 var builder = WebApplication.CreateBuilder(args);
@@ -12,8 +13,8 @@ var port = Environment.GetEnvironmentVariable("PORT") ?? "8082";
 var url = $"http://localhost:{port}";
 var appUrl = Environment.GetEnvironmentVariable("APP_URL") ?? "http://localhost:3000";
 
-var issuerSigningCertificate = new SigningIssuerCertificate();
-RsaSecurityKey issuerSigningKey = issuerSigningCertificate.GetIssuerSigningKey();
+/* var issuerSigningCertificate = new SigningIssuerCertificate();
+RsaSecurityKey issuerSigningKey = issuerSigningCertificate.GetIssuerSigningKey(); */
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -26,7 +27,7 @@ builder.Services.AddAuthentication(options =>
     options.TokenValidationParameters = new TokenValidationParameters
     {
         NameClaimType = ClaimTypes.NameIdentifier,
-        IssuerSigningKey = issuerSigningKey
+        //IssuerSigningKey = issuerSigningKey
     };
     
 });
@@ -51,7 +52,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: MyCorsPolicy,
     builder =>
     {
-        builder.WithOrigins("http://localhost:3000")
+        builder.WithOrigins("http://localhost:3000", "https://staging-174a0.web.app")
             .AllowCredentials()
             .WithHeaders("Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization")
             .WithMethods("OPTIONS", "GET", "POST", "PUT", "DELETE");
@@ -89,7 +90,6 @@ app.UseSwaggerUI(c =>
 app.UseHttpsRedirection();
 app.UseCors(MyCorsPolicy);
 app.UseRouting();
-//app.UseAuth();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseEndpoints(endpoints =>

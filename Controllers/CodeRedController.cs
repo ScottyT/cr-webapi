@@ -2,7 +2,9 @@ using cr_app_webapi.Models;
 using cr_app_webapi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MongoDB.Bson;
 using RestSharp;
+using System.Net.Mime;
 using System.Text.Json;
 using System.Threading;
 using System.Web;
@@ -42,7 +44,6 @@ public class EmployeesController : ControllerBase
     [HttpGet("{email}")]
     public async Task<ActionResult<Object>> GetUser(string email, string id)
     {
-        var context = HttpContext.Request;
         var user = await _authService.GetUser(id);
         if (user.Content is null)
         {
@@ -74,9 +75,6 @@ public class ReportsController : ControllerBase
         _authService = authService;
         _reportsService = reportService;
     }
-
-    /* public async Task<string> AccessToken() =>
-        await _auth0services.GetToken(); */
     
     [HttpGet]
     public async Task<List<Report>> Get()
@@ -84,14 +82,23 @@ public class ReportsController : ControllerBase
         return await _reportsService.GetReports();
     }
 
-    [HttpGet("{reportType}/{id}")]
-    public async Task<ActionResult<Object>> GetReport(string id, string reportType)
+    [HttpGet("details/{reportType}/{id}")]
+    [Produces("application/json")]
+    public ActionResult<Object?> GetReport(string id, string reportType)
     {
-        var report = await _reportsService.GetReport(id, reportType);
+        var report = _reportsService.GetReport(id, reportType);
         if (report is null)
         {
             return NotFound();
         }
+        /* using var _context = new HttpContext();
+        _context.Response.Clear();
+        _context.Response.ContentType = "application/json";
+        await _context.Response.Body.WriteAsync(report, 0, report.Length);
+        var content = JsonSerializer.Deserialize<Object>(_context.Response.Body); */
+        //var res = Response.ContentType = "application/json";
+        //await Microsoft.AspNetCore.Http.HttpResponseWritingExtensions.WriteAsync(HttpContext.Response, report);
+        //var converted = JsonSerializer.Serialize<Object>(report);
         return report;
     }
     
@@ -155,7 +162,7 @@ public class ReportsController : ControllerBase
     // Only used for the containment-sheet, tech-sheet, inventory-logs, and atmospheric-readings
     public async Task<IActionResult> ReportsThatGetUpdated(Object updatedReport, string jobId, string reportType)
     {
-        object? report = await _reportsService.GetReport(jobId, reportType);
+        /* object? report = await _reportsService.GetReport(jobId, reportType);
         if (report is null) 
         {
             return NotFound();
@@ -171,7 +178,7 @@ public class ReportsController : ControllerBase
                 await _reportsService.Update(reportType, jobId);
                 break;
         }
-        
+         */
         return NoContent();
     }
 }
