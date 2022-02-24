@@ -1,6 +1,7 @@
 using cr_app_webapi.Models;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 using System.Text.Json;
 
@@ -77,77 +78,8 @@ namespace cr_app_webapi.Services
         // ------- End Employee Section ----- //
 
         // Reports section //
-        public async Task<List<Report>> GetReports() =>
-            await _reportCollection.Find(_ => true).ToListAsync();
         
-        public async Task<List<Report>> UserReports(string email) =>
-            await _reportCollection.Find(r => r.teamMember.email == email).ToListAsync();
-        public async Task<object> GetReport(string id, string reportType)
-        {
-            List<object> returnList = new List<object>();
-            object rep = await _reportCollection.Find(x => x.JobId == id && x.ReportType == reportType).As<object>().FirstOrDefaultAsync();
-           /*  var filters = (Builders<BsonDocument>.Filter.Eq("JobId", id) & Builders<BsonDocument>.Filter.Eq("ReportType", reportType));
-            var ObjectsList = await _repCollection.Find(filters).FirstOrDefaultAsync(); */
-            if (reportType.Contains("dispatch"))
-            {
-                /* var d = (from dispatch in _dispatch.AsQueryable().AsEnumerable().Where(x => x.JobId == id && x.ReportType == reportType)
-                    select new DispatchResponse
-                    {
-                        dispatch = dispatch
-                    });
-                returnList = d.Cast<object>().ToList(); */
-            }
-            //var reportAsBytes = ObjectsList.AsByteArray;
-            
-            return rep;
-        }
-
-        public List<Object> GetContract(string reportType, string id)
-        {
-            List<object> returnList = new List<object>();
-            if (reportType.Contains("coc"))
-            {
-                var q = from cert in _certificate.AsQueryable().AsEnumerable().Where(x => x.JobId == id && x.ReportType == reportType)
-                                 join card in _creditCard.AsQueryable() on
-                                 cert.card_id equals card.cardNumber
-                                 select new Certificate
-                                 {
-                                     Cert = cert,
-                                     creditCard = card
-                                 };
-                if (q.Count() <= 0)
-                {
-                    var c = (from aob in _assignmentOfBenefits.AsQueryable().AsEnumerable()
-                        where aob.JobId == id 
-                        where aob.ReportType == reportType
-                        select new Aob { AOB = aob });
-                    returnList = c.Cast<object>().ToList();
-                }
-                else returnList = q.Cast<object>().ToList();
-            }
-            else if (reportType.Contains("aob"))
-            {
-                var q = (from aob in _assignmentOfBenefits.AsQueryable().AsEnumerable().Where(x => x.JobId == id && x.ReportType == reportType)
-                                 join card in _creditCard.AsQueryable() on
-                                 aob.cardNumber equals card.cardNumber
-                                 select new Aob
-                                 {
-                                     AOB = aob,
-                                     creditCard = card
-                                 });
-                
-                if (q.Count() <= 0)
-                {
-                    var a = (from aob in _assignmentOfBenefits.AsQueryable().AsEnumerable()
-                        where aob.JobId == id 
-                        where aob.ReportType == reportType
-                        select new Aob { AOB = aob });
-                    returnList = a.Cast<object>().ToList();
-                } 
-                else returnList = q.Cast<object>().ToList();
-            }
-            return returnList;
-        }
+        
 
         public async Task CreateDispatch(Dispatch report) =>
             await _dispatch.InsertOneAsync(report);

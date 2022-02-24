@@ -42,7 +42,7 @@ public class EmployeesController : ControllerBase
     } */
     
     [HttpGet("{email}")]
-    public async Task<ActionResult<Object>> GetUser(string email, string id)
+    public async Task<ActionResult<Object?>> GetUser(string email, string id)
     {
         var user = await _authService.GetUser(id);
         if (user.Content is null)
@@ -69,55 +69,49 @@ public class ReportsController : ControllerBase
 {
     private readonly CodeRedServices _reportsService;
     private AuthServices _authService;
+    private readonly IMongoDbClient _mongoService;
     
-    public ReportsController(CodeRedServices reportService, AuthServices authService)
+    public ReportsController(CodeRedServices reportService, AuthServices authService, IMongoDbClient mongoService)
     {
         _authService = authService;
         _reportsService = reportService;
+        _mongoService = mongoService;
     }
     
     [HttpGet]
     public async Task<List<Report>> Get()
     {
-        return await _reportsService.GetReports();
+        return await _mongoService.GetReports();
     }
 
-    [HttpGet("details/{reportType}/{id}")]
-    [Produces("application/json")]
-    public ActionResult<Object?> GetReport(string id, string reportType)
+    [HttpGet("{id:length(24)}")]
+    public async Task<ActionResult<Object>> GetReport(string id)
     {
-        var report = _reportsService.GetReport(id, reportType);
+        var report = await _mongoService.GetReport(id);
         if (report is null)
         {
             return NotFound();
         }
-        /* using var _context = new HttpContext();
-        _context.Response.Clear();
-        _context.Response.ContentType = "application/json";
-        await _context.Response.Body.WriteAsync(report, 0, report.Length);
-        var content = JsonSerializer.Deserialize<Object>(_context.Response.Body); */
-        //var res = Response.ContentType = "application/json";
-        //await Microsoft.AspNetCore.Http.HttpResponseWritingExtensions.WriteAsync(HttpContext.Response, report);
-        //var converted = JsonSerializer.Serialize<Object>(report);
+        
         return report;
     }
     
     [HttpGet("{reportType}/{id}/certificate")]
-    public ActionResult<Certificate> GetCertReport(string id, string reportType)
+    public ActionResult<CertificateOfCompletion> GetCertReport(string id, string reportType)
     {
-        var report = _reportsService.GetContract(reportType, id).FirstOrDefault();
+        var report = _mongoService.GetContract(reportType, id).FirstOrDefault();
         if (report is null)
         {
             return NoContent();
         }
         var result = (Certificate)report;
         result.Cert.creditCard = result.creditCard;
-        return result;
+        return result.Cert;
     }
     [HttpGet("{reportType}/{id}/aob")]
     public ActionResult<AssignmentOfBenefits> GetAobReport(string id, string reportType)
     {
-        var report = _reportsService.GetContract(reportType, id).FirstOrDefault();
+        var report = _mongoService.GetContract(reportType, id).FirstOrDefault();
         if (report is null)
         {
             return NoContent();
@@ -129,7 +123,7 @@ public class ReportsController : ControllerBase
     [HttpGet("{email}/employee")]
     public async Task<List<Report>> GetUserReports(string email)
     {
-        var reports = await _reportsService.UserReports(email);
+        var reports = await _mongoService.UserReports(email);
         return reports;
     }
 
@@ -137,7 +131,7 @@ public class ReportsController : ControllerBase
     public async Task<IActionResult> Post([FromBody] Object report, string reportType, string jobid)
     {
         var createdReport = JsonSerializer.Serialize(report);
-        await _reportsService.Create(reportType, createdReport);
+        await _mongoService.CreateReport(reportType, createdReport);
         
         return CreatedAtAction(nameof(Get), "Successfully created report!");
     }
@@ -158,11 +152,11 @@ public class ReportsController : ControllerBase
         return CreatedAtAction(nameof(Get), "Psychrometric chart updated successfully!");
     }
 
-    [HttpPut("{reportType}/{jobId}/update")]
+    [HttpPut("{reportType}/{id}/update")]
     // Only used for the containment-sheet, tech-sheet, inventory-logs, and atmospheric-readings
-    public async Task<IActionResult> ReportsThatGetUpdated(Object updatedReport, string jobId, string reportType)
+    public async Task<IActionResult> ReportsThatGetUpdated(Object updatedReport, string id, string reportType)
     {
-        /* object? report = await _reportsService.GetReport(jobId, reportType);
+        object? report = await _mongoService.GetReport(id);
         if (report is null) 
         {
             return NotFound();
@@ -175,10 +169,10 @@ public class ReportsController : ControllerBase
                 
                 break;
             default:
-                await _reportsService.Update(reportType, jobId);
+                await _reportsService.Update(reportType, id);
                 break;
         }
-         */
+        
         return NoContent();
     }
 }

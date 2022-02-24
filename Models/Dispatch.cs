@@ -4,7 +4,7 @@ using MongoDB.Bson.Serialization.Attributes;
 namespace cr_app_webapi.Models
 {
     [BsonIgnoreExtraElements]
-    public class Dispatch
+    public record Dispatch
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
@@ -36,9 +36,5 @@ namespace cr_app_webapi.Models
         public string? team_id {get; set;}
         public DateTime createdAt {get; set;}
         public DateTime updatedAt {get; set;}
-    }
-    public class DispatchResponse
-    {
-        public Dispatch dispatch {get; set;}
     }
 }

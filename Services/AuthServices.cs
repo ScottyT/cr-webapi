@@ -25,8 +25,9 @@ namespace cr_app_webapi.Services
             _client?.Dispose();
         }
 
-        public async Task<string> GetToken()
+        public async Task<TokenResponse?> GetToken()
         {
+            TokenResponse? response = new TokenResponse();
             var request = new RestRequest("oauth/token");
             var body =  new {
                 client_id = _clientId,
@@ -35,8 +36,9 @@ namespace cr_app_webapi.Services
                 grant_type = "client_credentials"
             };
             request.AddObject(body);
-            var response = await _client.PostAsync<TokenResponse>(request);
-            return response!.AccessToken;
+            response = await _client.PostAsync<TokenResponse>(request);
+            
+            return response;
         }
     
         public async Task<RestResponse> GetUser(string userid)
@@ -44,7 +46,7 @@ namespace cr_app_webapi.Services
             var token = await GetToken();
             using var client = new RestClient("https://" + _config["Auth0:Domain"] + "/api/v2/");
             var request = new RestRequest("users/" + userid);
-            request.AddHeader("authorization", "Bearer "+ token);
+            request.AddHeader("authorization", "Bearer "+ token?.AccessToken);
             var response = await client.GetAsync(request);
     
             return response;

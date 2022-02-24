@@ -1,4 +1,6 @@
 using System.Security.Claims;
+using System.Text.Json.Serialization;
+using cr_app_webapi;
 using cr_app_webapi.Models;
 using cr_app_webapi.Services;
 using JwtAuthentication.AsymmetricEncryption.Certificates;
@@ -13,8 +15,6 @@ var port = Environment.GetEnvironmentVariable("PORT") ?? "8082";
 var url = $"http://localhost:{port}";
 var appUrl = Environment.GetEnvironmentVariable("APP_URL") ?? "http://localhost:3000";
 
-/* var issuerSigningCertificate = new SigningIssuerCertificate();
-RsaSecurityKey issuerSigningKey = issuerSigningCertificate.GetIssuerSigningKey(); */
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -26,8 +26,7 @@ builder.Services.AddAuthentication(options =>
     options.Audience = builder.Configuration["Auth0:Audience"];
     options.TokenValidationParameters = new TokenValidationParameters
     {
-        NameClaimType = ClaimTypes.NameIdentifier,
-        //IssuerSigningKey = issuerSigningKey
+        NameClaimType = ClaimTypes.NameIdentifier
     };
     
 });
@@ -47,6 +46,11 @@ builder.Services.Configure<Auth0Settings>(
 builder.Services.AddSingleton<CodeRedServices>();
 builder.Services.AddSingleton<AuthServices>();
 builder.Services.AddSingleton<IAuthorizationHandler, HasScopeHandler>();
+builder.Services.AddSingleton<IMongoDbClient>(
+    new MongoDbClient(
+        builder.Configuration["MongoDb:ConnectionString"], builder.Configuration["MongoDb:Database"]
+    )
+);
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: MyCorsPolicy,
@@ -61,7 +65,11 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddControllers()
     .AddJsonOptions(
-        options => options.JsonSerializerOptions.PropertyNamingPolicy = null
+        options =>
+        {
+            options.JsonSerializerOptions.PropertyNamingPolicy = null;
+            options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+        }
     );
 builder.Services.AddHttpContextAccessor();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

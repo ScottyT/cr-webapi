@@ -54,14 +54,14 @@ public class AssignmentOfBenefits
     [BsonElement("cardNumber")]
     public string? cardNumber {get; set;}
     [BsonIgnore]
-    public CreditCard creditCard {get; set;} = new CreditCard();
+    public CreditCard? creditCard {get; set;} = new CreditCard();
     public DateTime createdAt {get; set;}
     public DateTime updatedAt {get; set;}
 }
 
 [BsonIgnoreExtraElements]
-public class Aob
-{
-    public AssignmentOfBenefits AOB {get; set;} = new AssignmentOfBenefits();
-    public CreditCard? creditCard {get; set;}
-}
+public record struct Aob(AssignmentOfBenefits? AOB, CreditCard creditCard);
+/* {
+    public AssignmentOfBenefits? AOB {get; set;} = new AssignmentOfBenefits();
+    public CreditCard creditCard {get; set;} = new CreditCard();
+} */

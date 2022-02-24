@@ -35,8 +35,8 @@ public class CertificateOfCompletion
     public DateTime createdAt {get; set;}
     public DateTime updatedAt {get; set;}
 }
-public class Certificate
-{
+public record struct Certificate(CertificateOfCompletion Cert, CreditCard creditCard);
+/* {
     public CertificateOfCompletion Cert {get; set;} = new CertificateOfCompletion();
     public CreditCard creditCard {get; set;} = new CreditCard();
-}
+} */
