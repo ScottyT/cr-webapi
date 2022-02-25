@@ -13,57 +13,6 @@ namespace cr_app_webapi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize("read:users")]
-public class EmployeesController : ControllerBase
-{
-    private readonly CodeRedServices _employeesService;
-    private AuthServices _authService;
-    public EmployeesController(CodeRedServices empService, AuthServices authService)
-    {
-        _employeesService = empService;
-        _authService = authService;
-    }
-
-    [HttpGet]
-    public async Task<List<Employee>> Get()
-    {
-        return await _employeesService.GetEmployees();
-    }
-    
-    /* [HttpGet("{teamid}")]
-    public async Task<ActionResult<Employee>> Get(string teamid)
-    {
-        var employee = await _employeesService.GetEmployee(teamid);
-        if (employee is null)
-        {
-            return NotFound();
-        }
-        return employee;
-    } */
-    
-    [HttpGet("{email}")]
-    public async Task<ActionResult<Object?>> GetUser(string email, string id)
-    {
-        var user = await _authService.GetUser(id);
-        if (user.Content is null)
-        {
-            return NotFound();
-        }
-        var content = JsonSerializer.Deserialize<Object>(user.Content);
-        return content;
-    }
-
-    [HttpPost("create")]
-    public async Task<IActionResult> CreateUser(Employee newEmployee)
-    {
-        var jsonstring = JsonSerializer.Serialize(newEmployee);
-        await _employeesService.CreateEmployee(jsonstring);
-        return CreatedAtAction(nameof(Get), new { _id = newEmployee._id }, newEmployee);
-    }
-}
-
-[ApiController]
-[Route("api/[controller]")]
 [Authorize("read:reports")]
 public class ReportsController : ControllerBase
 {
@@ -140,7 +89,7 @@ public class ReportsController : ControllerBase
     public async Task<IActionResult> CreatePsychrometric(Psychrometric report)
     {
         var r = JsonSerializer.Serialize(report);
-        await _reportsService.UpdatePsychrometricChart(r, report, "new");
+        await _mongoService.UpdatePsychrometricChart(r, report, "new");
         return CreatedAtAction(nameof(Get), "Psychrometric chart saved successfully!");
     }
 
@@ -148,7 +97,7 @@ public class ReportsController : ControllerBase
     public async Task<IActionResult> UpdatePsychrometric(Psychrometric report)
     {
         var r = JsonSerializer.Serialize(report);
-        await _reportsService.UpdatePsychrometricChart(r, report, "update");
+        await _mongoService.UpdatePsychrometricChart(r, report, "update");
         return CreatedAtAction(nameof(Get), "Psychrometric chart updated successfully!");
     }
 
@@ -166,10 +115,10 @@ public class ReportsController : ControllerBase
         {
             case "containment-sheet":
             case "tech-sheet":
-                
+                await _mongoService.UpdateReport(reportType, id);
                 break;
             default:
-                await _reportsService.Update(reportType, id);
+                await _mongoService.UpdateReport(reportType, id);
                 break;
         }
         

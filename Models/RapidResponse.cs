@@ -2,14 +2,9 @@ using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 namespace cr_app_webapi.Models;
 
-public class RapidResponse
+[BsonIgnoreExtraElements]
+public class RapidResponse : Report
 {
-    [BsonId]
-    [BsonRepresentation(BsonType.ObjectId)]
-    public string? Id {get; set;}
-    public string JobId {get; set;} = null!;
-    public string? ReportType {get; set;}
-    public string? formType {get; set;}
     public string? DateOfLoss {get; set;}
     public string? ClaimNumber {get; set;}
     public Object? ContactName {get; set;}
@@ -32,10 +27,10 @@ public class RapidResponse
     public string? customerSig {get; set;}
     public string? cusSignDate {get; set;}
     public string? moistureMap {get; set;}
-    public string? id {get; set;}
+    [BsonElement("id")]
+    public string? team_id {get; set;}
     public Object? location {get; set;}
     public string? signDate {get; set;}
-    public Object? teamMember {get; set;}
     public List<object> intrusion {get; set;} = new List<object>();
     public string? dateIntrusion {get; set;}
     public string? timeIntrusion {get; set;}
@@ -47,6 +42,4 @@ public class RapidResponse
     public string? initial2 {get; set;}
     public string? initial3 {get; set;}
     public string? initial4 {get; set;}
-    public DateTime createdAt {get; set;}
-    public DateTime updatedAt {get; set;}
 }

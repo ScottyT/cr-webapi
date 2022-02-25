@@ -3,14 +3,8 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace cr_app_webapi.Models;
 
-public class QualityControl
+public class QualityControl : Report
 {
-    [BsonId]
-    [BsonRepresentation(BsonType.ObjectId)]
-    public string? Id {get; set;}
-    public string? JobId {get; set;}
-    public string? ReportType {get; set;}
-    public string? formType {get; set;}
     public Object? location {get; set;}
     public List<string> completedDocs {get; set;} = new List<string>();
     public Object? completedServices {get; set;}
@@ -21,6 +15,4 @@ public class QualityControl
     public Object? customer {get; set;}
     public string? customerSig {get; set;}
     public string? signDate {get; set;}
-    public DateTime createdAt {get; set;}
-    public DateTime updatedAt {get; set;}
 }

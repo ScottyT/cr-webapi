@@ -4,14 +4,8 @@ using MongoDB.Bson.Serialization.Attributes;
 namespace cr_app_webapi.Models;
 
 [BsonIgnoreExtraElements]
-public class AssignmentOfBenefits
+public class AssignmentOfBenefits : Report
 {
-    [BsonId]
-    [BsonRepresentation(BsonType.ObjectId)]
-    public string? Id {get; set;}
-    public string? JobId {get; set;}
-    public string? ReportType {get; set;}
-    public string? formType {get; set;}
     public string? contractingCompany {get; set;}
     public string? subjectProperty {get; set;}
     public string? cusSign1 {get; set;}
@@ -47,7 +41,6 @@ public class AssignmentOfBenefits
     public string? witnessDate {get; set;}
     public string? numberOfRooms {get; set;}
     public string? numberOfFloors {get; set;}
-    public Object? teamMember {get; set;}
     public string? paymentOption {get; set;}
     public string? cusSign2 {get; set;}
     public string? cusSignDate2 {get; set;}
@@ -55,8 +48,6 @@ public class AssignmentOfBenefits
     public string? cardNumber {get; set;}
     [BsonIgnore]
     public CreditCard? creditCard {get; set;} = new CreditCard();
-    public DateTime createdAt {get; set;}
-    public DateTime updatedAt {get; set;}
 }
 
 [BsonIgnoreExtraElements]

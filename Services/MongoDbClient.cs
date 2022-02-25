@@ -10,9 +10,13 @@ namespace cr_app_webapi.Services
         private readonly MongoClient _client;
         private readonly IMongoDatabase _database;
         private readonly IMongoCollection<Report> _reportCollection;
-        private IMongoCollection<CertificateOfCompletion> _certificate;
-        private IMongoCollection<AssignmentOfBenefits> _assignmentOfBenefits;
-        private IMongoCollection<CreditCard> _creditCard;
+        private readonly IMongoCollection<CertificateOfCompletion> _certificate;
+        private readonly IMongoCollection<Dispatch> _dispatch;
+        private readonly IMongoCollection<AssignmentOfBenefits> _assignmentOfBenefits;
+        private readonly IMongoCollection<CreditCard> _creditCard;
+        private readonly IMongoCollection<Employee> _employeesCollection;
+        private readonly IHttpContextAccessor _contextAccessor;
+        
         
         public MongoDbClient(string connectionString, string databaseName)
         {
@@ -21,7 +25,29 @@ namespace cr_app_webapi.Services
             _reportCollection = _database.GetCollection<Report>("reports");
             _certificate = _database.GetCollection<CertificateOfCompletion>("reports");
             _assignmentOfBenefits = _database.GetCollection<AssignmentOfBenefits>("reports");
+            _dispatch = _database.GetCollection<Dispatch>("reports");
             _creditCard = _database.GetCollection<CreditCard>("credit-cards");
+            _employeesCollection = _database.GetCollection<Employee>("employees");
+            _contextAccessor = new HttpContextAccessor();
+        }
+
+        public class ReportStore<T>
+        {
+            public T? Data {get; set;}
+        }
+        class ReportLogic<T> where T : Report, new()
+        {
+            public async Task Create(IMongoCollection<T> collection, string report)
+            {
+                var time = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
+                T? c = JsonSerializer.Deserialize<T>(report);
+                if (c is not null) 
+                {
+                    c.createdAt = time;
+                    c.updatedAt = time;
+                    await collection.InsertOneAsync(c);
+                }
+            }
         }
 
         public async Task<Object> GetReport(string reportid)
@@ -87,78 +113,143 @@ namespace cr_app_webapi.Services
                 return;
             }
             var time = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
+            ReportLogic<Dispatch> d = new ReportLogic<Dispatch>();
+            ReportLogic<RapidResponse> rapid = new ReportLogic<RapidResponse>();
+            ReportLogic<CaseFile> cf = new ReportLogic<CaseFile>();
+            ReportLogic<Upholstery> u = new ReportLogic<Upholstery>();
+            ReportLogic<ServiceAgreement> ser = new ReportLogic<ServiceAgreement>();
+            ReportLogic<QualityControl> qual = new ReportLogic<QualityControl>();
+            ReportLogic<CertificateOfCompletion> coc = new ReportLogic<CertificateOfCompletion>();
+            ReportLogic<AssignmentOfBenefits> aob = new ReportLogic<AssignmentOfBenefits>();
+
             switch (reportType)
             {
                 case "dispatch":
-                    var dRep = JsonSerializer.Deserialize<Dispatch>(report);
-                    if (dRep is null) break;
-                    dRep.createdAt = time;
-                    dRep.updatedAt = time;
-                    await _database.GetCollection<Dispatch>("reports").InsertOneAsync(dRep);
+                    var dispatchCol = _database.GetCollection<Dispatch>("reports");
+                    await d.Create(dispatchCol, report);
                     break;
                 case "rapid-response":
-                    var rapidRep = JsonSerializer.Deserialize<RapidResponse>(report);
-                    if (rapidRep is null) break;
-                    rapidRep.createdAt = time;
-                    rapidRep.updatedAt = time;
-                    await _database.GetCollection<RapidResponse>("reports").InsertOneAsync(rapidRep);
+                    var rapidCol = _database.GetCollection<RapidResponse>("reports");
+                    await rapid.Create(rapidCol, report);
                     break;
                 case "containment-sheet":
                 case "tech-sheet":
-                    var caseFileRep = JsonSerializer.Deserialize<CaseFile>(report);
-                    if (caseFileRep is null) break;
-                    caseFileRep.createdAt = time;
-                    caseFileRep.updatedAt = time;
-                    await _database.GetCollection<CaseFile>("reports").InsertOneAsync(caseFileRep);
+                    var caseFileCol = _database.GetCollection<CaseFile>("reports");
+                    await cf.Create(caseFileCol, report);
                     break;
                 case "quality-control":
-                    var qcRep = JsonSerializer.Deserialize<QualityControl>(report);
-                    if (qcRep is null) break;
-                    qcRep.createdAt = time;
-                    qcRep.updatedAt = time;
-                    await _database.GetCollection<QualityControl>("reports").InsertOneAsync(qcRep);
+                    var qualityCol = _database.GetCollection<QualityControl>("reports");
+                    await qual.Create(qualityCol, report);
                     break;
                 case "upholstery-form":
-                    var upholstery = JsonSerializer.Deserialize<Upholstery>(report);
-                    if (upholstery is null) break;
-                    upholstery.createdAt = time;
-                    upholstery.updatedAt = time;
-                    await _database.GetCollection<Upholstery>("reports").InsertOneAsync(upholstery);
+                    var upholstery = _database.GetCollection<Upholstery>("reports");
+                    await u.Create(upholstery, report);
                     break;
             }
             if (reportType.Contains("coc"))
             {
-                var coc = JsonSerializer.Deserialize<CertificateOfCompletion>(report);
-                if (coc is null) return;
-                coc.createdAt = time;
-                coc.updatedAt = time;
-                await _certificate.InsertOneAsync(coc);
+                await coc.Create(_certificate, report);
                 return;
             }
             if (reportType.Contains("aob"))
             {
-                var aob = JsonSerializer.Deserialize<AssignmentOfBenefits>(report);
-                if (aob is null) return;
-                aob.createdAt = time;
-                aob.updatedAt = time;
-                await _assignmentOfBenefits.InsertOneAsync(aob);
+                await aob.Create(_assignmentOfBenefits, report);
                 return;
             }
             if (reportType.Contains("contracting-agreement"))
             {
-                var serviceAgreement = JsonSerializer.Deserialize<ServiceAgreement>(report);
-                if (serviceAgreement is null) return;
-                serviceAgreement.createdAt = time;
-                serviceAgreement.updatedAt = time;
-                await _database.GetCollection<ServiceAgreement>("reports").InsertOneAsync(serviceAgreement);
+                var contractCol = _database.GetCollection<ServiceAgreement>("reports");
+                await ser.Create(contractCol, report);
                 return;
             }
         }
 
-        public class ReportStore<T>
+        // Also used to create chart
+        public async Task UpdatePsychrometricChart(string reportJson, Psychrometric report, string action)
         {
-            public T? Data {get; set;}
+            var reportBson = _database.GetCollection<BsonDocument>("reports");
+            var time = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
+            BsonDocument doc = BsonDocument.Parse(reportJson);
+            Psychrometric? rep = JsonSerializer.Deserialize<Psychrometric>(reportJson);
+            var jobProgress = doc.Elements.Where(el => el.Name == "jobProgress").FirstOrDefault();
+            if (rep is null) return;
+            var filters = (Builders<BsonDocument>.Filter.Eq("JobId", report.JobId) & Builders<BsonDocument>.Filter.Eq("ReportType", report.ReportType)
+                & Builders<BsonDocument>.Filter.Eq("formType", report.formType));
+            var existingReport = reportBson.Find(filters).FirstOrDefault();
+            
+            switch (action)
+            {
+                case "new":
+                    UpdateDefinition<BsonDocument> updateBuilder = Builders<BsonDocument>.Update.Push(jobProgress.Name, jobProgress.Value);
+                    var update = updateBuilder;
+                    if (existingReport is null) update = updateBuilder.Set("updatedAt", time).Set("createdAt", time);
+                    else update = updateBuilder.Set("updatedAt", time);
+                    var options = new FindOneAndUpdateOptions<BsonDocument> { IsUpsert = true };
+                    await reportBson.FindOneAndUpdateAsync(filters, update, options);
+                    break;
+                case "update":
+                    update = Builders<BsonDocument>.Update.Set("jobProgress.$[el]", jobProgress.Value)
+                        .Set("updatedAt", time);
+                    var arrayFilter = new BsonDocumentArrayFilterDefinition<BsonDocument>(
+                        new BsonDocument("el.readingsType", new BsonDocument("$eq", report.jobProgress?.readingsType))
+                    );
+                    var arrayFilters = new List<ArrayFilterDefinition> { arrayFilter };
+                    options = new FindOneAndUpdateOptions<BsonDocument> { ArrayFilters = arrayFilters };
+                    await reportBson.FindOneAndUpdateAsync(filters, update, options);
+                    break;
+                default:
+                    await HandleError(_contextAccessor, "Please provide an action type");
+                    break;
+            }
         }
-        record ReportSingleObject<T>(T Data);
+
+        public async Task UpdateReport(string reportType, string jobId)
+        {
+            var time = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
+            switch (reportType)
+            {
+                case "containment-sheet":
+                case "tech-sheet":
+                    ReportStore<CaseFile> caseFile = new ReportStore<CaseFile>();
+                    var caseFileCol = _database.GetCollection<ReportStore<CaseFile>>("reports");
+                    var update = Builders<ReportStore<CaseFile>>.Update.Set("updatedAt", time);
+                    caseFile.Data = await caseFileCol.UpdateOneAsync<ReportStore<CaseFile>>(x => x.Data.JobId == jobId && x.Data.ReportType == reportType, update);
+                    //await _dispatch.UpdateOneAsync(x => x.JobId == jobId && x.ReportType == reportType, update);
+                    break;
+            }
+        }
+        public async Task<Employee> GetUser(string email)
+        {
+            var e = await _employeesCollection.Find(e => e.email == email).FirstOrDefaultAsync();
+            var user = new Employee
+            {
+                Id = e.Id,
+                certifications_id = e.certifications_id,
+                createdAt = e.createdAt,
+                email = e.email,
+                fullName = new FullName(e.fname, e.lname),
+                role = e.role,
+                id = e.id
+            };
+            return user;
+        }
+
+        public async Task<List<Employee>> GetUsers() =>
+            await _employeesCollection.Find(_ => true).ToListAsync();
+
+        public async Task CreateUser(Employee newUser)
+        {
+            var time = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
+            if (newUser is null) return;
+            newUser.createdAt = time;
+            newUser.updatedAt = time;
+            await _employeesCollection.InsertOneAsync(newUser);
+        }
+        private async Task HandleError(IHttpContextAccessor context, string message)
+        {
+            var httpContext = context.HttpContext;
+            if (httpContext is null) return;
+            await httpContext.Response.WriteAsJsonAsync("Error: " + message);
+        }
     }
 }

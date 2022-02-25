@@ -17,6 +17,8 @@ namespace cr_app_webapi.Models
         public string? formType {get; set;}
         public TeamMember teamMember {get; set;} = new TeamMember();
         public string? date {get; set;}
+        public DateTime createdAt {get; set;}
+        public DateTime updatedAt {get; set;}
         /* public string? timeFormatted {get; set;}
         public string? callTimeUpdate {get; set;}
         public Boolean teamMemberSig {get; set;}

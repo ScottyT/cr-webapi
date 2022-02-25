@@ -3,14 +3,8 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace cr_app_webapi.Models;
 [BsonIgnoreExtraElements]
-public class CertificateOfCompletion
+public class CertificateOfCompletion : Report
 {
-    [BsonId]
-    [BsonRepresentation(BsonType.ObjectId)]
-    public string? Id {get; set;}
-    public string? JobId {get; set;}
-    public string? ReportType {get; set;}
-    public string? formType {get; set;}
     public string? subjectProperty {get; set;}
     public string? deductible {get; set;}
     public string? insuredMinEndDate {get; set;}
@@ -26,14 +20,11 @@ public class CertificateOfCompletion
     public string? repSignDate {get; set;}
     public Boolean teamSign {get; set;}
     public string? teamSignDate {get; set;}
-    public Object? teamMember {get; set;}
     public string? testimonial {get; set;}
     public string? paymentOption {get; set;}
     public string? card_id {get; set;}
     [BsonIgnore]
     public CreditCard creditCard {get; set;} = new CreditCard();
-    public DateTime createdAt {get; set;}
-    public DateTime updatedAt {get; set;}
 }
 public record struct Certificate(CertificateOfCompletion Cert, CreditCard creditCard);
 /* {
