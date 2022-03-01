@@ -3,54 +3,38 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace cr_app_webapi.Models;
 [BsonIgnoreExtraElements]
-[BsonKnownTypes(typeof(Employee))]
-public class Employee : IEmployee
+[BsonCollection("employees")]
+public class Employee : Document
 {
-    public Employee()
-    {
-        IsActive = true;
-        Created = DateTime.UtcNow;
-        Modified = DateTime.UtcNow;
-    }
-    [BsonId]
-    public ObjectId Id { get; set; }
     public string fname { get; init; } = default!;
     public string lname { get; init; } = default!;
-    public FullName fullName {get; init;} = default!;
+    public FullName? fullName {get; set;}
     public string email { get; init; } = default!;
-    public string id { get; init; } = default!;
+    [BsonElement("id")]
+    public string team_id { get; init; } = default!;
     public string role { get; init; } = default!;
-    public DateTime createdAt { get; set; }
-    public DateTime updatedAt { get; set; }
     // Might change certifications to be defined as Certification type
-    public List<string> certifications_id { get; set; } = new List<string>();
-    public string Name { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-    public bool IsActive { get; set; }
-    public string Description { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-    public DateTime Created { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
-    public DateTime Modified { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+    public List<string>? certifications_id { get; init; }
+    public string? picture {get; set;}
+
     // public List<Object> UserReports {get; set;} = new List<Object>();
 }
 
-public interface IEmployee : IMongoCommon
+public readonly record struct FullName(string FirstName, string LastName)
 {
-    string fname { get; init; }
-    string lname { get; init; }
-    FullName fullName {get; init;}
-    string email { get; init; }
-    string id { get; init; }
-    string role { get; init; }
+    public string Name => FirstName + " " + LastName;
 }
-
-public record FullName(string FirstName, string LastName);
-
-public class Certification
+public class AuthUser
 {
-    [BsonId]
-    [BsonRepresentation(BsonType.ObjectId)]
-    public string? _id { get; set; }
-    public string? idNumber { get; set; }
-    public string? description { get; set; }
-    public string? expiration { get; set; }
-    public Object? badge { get; set; }
+    //public Employee employee {get; set;} = new Employee();
+    public string? connection {get; set;}
+    public string? email {get; set;}
+    public string? password {get; set;}
+    public string? username {get; set;}
+    public object? user_metadata {get; set;} = new object();
+}
+public class UserObj
+{
+    public Employee employee {get; set;} = new Employee();
+    public AuthUser authUser {get; set;} = new AuthUser();
 }

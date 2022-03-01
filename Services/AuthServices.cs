@@ -51,5 +51,19 @@ namespace cr_app_webapi.Services
     
             return response;
         }
+
+        public async Task<RestResponse> CreateUser(Object newUser)
+        {
+            var token = await GetToken();
+            var body = new {
+                connection = "Username-Password-Authentication"
+            };
+            using var client = new RestClient("https://" + _config["Auth0:Domain"] + "/api/v2/");
+            var request = new RestRequest("users");
+            request.AddHeader("authorization", "Bearer " + token?.AccessToken);
+            request.AddObject(body);
+            var response = await client.PostAsync(request);
+            return response;
+        }
     }
 }

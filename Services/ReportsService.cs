@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using System.Text.Json;
 using cr_app_webapi.Models;
 using MongoDB.Bson;
@@ -5,37 +6,27 @@ using MongoDB.Driver;
 
 namespace cr_app_webapi.Services
 {
-    public class MongoDbClient : IMongoDbClient
+    public class ReportsService : IReportService
     {
-        private readonly MongoClient _client;
         private readonly IMongoDatabase _database;
-        private readonly IMongoCollection<Report> _reportCollection;
-        private readonly IMongoCollection<CertificateOfCompletion> _certificate;
-        private readonly IMongoCollection<Dispatch> _dispatch;
         private readonly IMongoCollection<AssignmentOfBenefits> _assignmentOfBenefits;
-        private readonly IMongoCollection<CreditCard> _creditCard;
-        private readonly IMongoCollection<Employee> _employeesCollection;
+        private readonly IMongoCollection<CertificateOfCompletion> _certificate;
         private readonly IHttpContextAccessor _contextAccessor;
-        
-        
-        public MongoDbClient(string connectionString, string databaseName)
+        private readonly IMongoCollection<CreditCard> _creditCard;
+        private readonly IMongoCollection<CaseFile> _caseFile;
+      
+        public ReportsService(ICodeRedDatabaseSettings settings)
         {
-            _client = new MongoClient(connectionString);
-            _database = _client.GetDatabase(databaseName);
-            _reportCollection = _database.GetCollection<Report>("reports");
+            _database = new MongoClient(settings.ConnectionString).GetDatabase(settings.DatabaseName);
+            _creditCard = _database.GetCollection<CreditCard>("credit-cards");
+            _caseFile = _database.GetCollection<CaseFile>("reports");
             _certificate = _database.GetCollection<CertificateOfCompletion>("reports");
             _assignmentOfBenefits = _database.GetCollection<AssignmentOfBenefits>("reports");
-            _dispatch = _database.GetCollection<Dispatch>("reports");
-            _creditCard = _database.GetCollection<CreditCard>("credit-cards");
-            _employeesCollection = _database.GetCollection<Employee>("employees");
             _contextAccessor = new HttpContextAccessor();
         }
 
-        public class ReportStore<T>
-        {
-            public T? Data {get; set;}
-        }
-        class ReportLogic<T> where T : Report, new()
+        // Generics for report
+        public class ReportLogic<T> where T : Report, new()
         {
             public async Task Create(IMongoCollection<T> collection, string report)
             {
@@ -50,69 +41,12 @@ namespace cr_app_webapi.Services
             }
         }
 
-        public async Task<Object> GetReport(string reportid)
-        {
-            ReportStore<Object> store = new ReportStore<Object>();
-            var reportModelCol = _database.GetCollection<Report>("reports");
-            store.Data = await reportModelCol.Find(x => x.Id == reportid).As<Object>().FirstOrDefaultAsync();
-            return store.Data;
-        }
-
-        public async Task<List<Report>> GetReports()
-        {
-            var data = await _reportCollection.Find(_ => true).As<Report>().ToListAsync();
-            return data;
-        }
-
-        public async Task<List<Report>> UserReports(string email) =>
-            await _reportCollection.Find(r => r.teamMember.email == email).ToListAsync();
-
-        public List<Object> GetContract(string reportType, string id)
-        {
-            List<Object> returnList = new List<object>();
-            if (reportType.Contains("coc") && reportType.Contains("aob"))
-            {
-                var q = from cert in _certificate.AsQueryable().AsEnumerable().Where(x => x.JobId == id && x.ReportType == reportType)
-                                 join card in _creditCard.AsQueryable() on
-                                 cert.card_id equals card.cardNumber
-                                 select new Certificate(cert, card);
-                if (q.Count() <= 0)
-                {
-                    var c = (from cert in _certificate.AsQueryable().AsEnumerable()
-                        where cert.JobId == id 
-                        where cert.ReportType == reportType
-                        select new Certificate { Cert = cert });
-                    returnList = c.Cast<object>().ToList();
-                }
-                else returnList = q.Cast<object>().ToList();
-            }
-            else if (reportType.Contains("aob"))
-            {
-                var q = (from aob in _assignmentOfBenefits.AsQueryable().AsEnumerable().Where(x => x.JobId == id && x.ReportType == reportType)
-                                 join card in _creditCard.AsQueryable() on
-                                 aob.cardNumber equals card.cardNumber
-                                 select new Aob(aob, card));
-                
-                if (q.Count() <= 0)
-                {
-                    var a = (from aob in _assignmentOfBenefits.AsQueryable().AsEnumerable()
-                        where aob.JobId == id 
-                        where aob.ReportType == reportType
-                        select new Aob { AOB = aob });
-                    returnList = a.Cast<object>().ToList();
-                } 
-                else returnList = q.Cast<object>().ToList();
-            }
-            return returnList;
-        }
-
         public async Task CreateReport(string reportType, string report)
         {
             if (report is "" && reportType is "")
             {
                 return;
             }
-            var time = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
             ReportLogic<Dispatch> d = new ReportLogic<Dispatch>();
             ReportLogic<RapidResponse> rapid = new ReportLogic<RapidResponse>();
             ReportLogic<CaseFile> cf = new ReportLogic<CaseFile>();
@@ -164,6 +98,53 @@ namespace cr_app_webapi.Services
             }
         }
 
+        public List<object> GetContract(string reportType, string id)
+        {
+            List<Object> returnList = new List<object>();
+            if (reportType.Contains("coc") && reportType.Contains("aob"))
+            {
+                var q = from cert in _certificate.AsQueryable().AsEnumerable().Where(x => x.JobId == id && x.ReportType == reportType)
+                                 join card in _creditCard.AsQueryable() on
+                                 cert.card_id equals card.cardNumber
+                                 select new Certificate(cert, card);
+                if (q.Count() <= 0)
+                {
+                    var c = (from cert in _certificate.AsQueryable().AsEnumerable()
+                        where cert.JobId == id 
+                        where cert.ReportType == reportType
+                        select new Certificate { Cert = cert });
+                    returnList = c.Cast<object>().ToList();
+                }
+                else returnList = q.Cast<object>().ToList();
+            }
+            else if (reportType.Contains("aob"))
+            {
+                var q = (from aob in _assignmentOfBenefits.AsQueryable().AsEnumerable().Where(x => x.JobId == id && x.ReportType == reportType)
+                                 join card in _creditCard.AsQueryable() on
+                                 aob.cardNumber equals card.cardNumber
+                                 select new Aob(aob, card));
+                
+                if (q.Count() <= 0)
+                {
+                    var a = (from aob in _assignmentOfBenefits.AsQueryable().AsEnumerable()
+                        where aob.JobId == id 
+                        where aob.ReportType == reportType
+                        select new Aob { AOB = aob });
+                    returnList = a.Cast<object>().ToList();
+                } 
+                else returnList = q.Cast<object>().ToList();
+            }
+            return returnList;
+        }
+
+        public async Task<Object?> GetReport(string id)
+        {
+            var objectid = new ObjectId(id);
+            var reportCollection = _database.GetCollection<Report>("reports");
+            var report = await reportCollection.Find(r => r.Id == id).As<Object>().FirstOrDefaultAsync();
+            return report;
+        }
+
         // Also used to create chart
         public async Task UpdatePsychrometricChart(string reportJson, Psychrometric report, string action)
         {
@@ -210,40 +191,11 @@ namespace cr_app_webapi.Services
             {
                 case "containment-sheet":
                 case "tech-sheet":
-                    ReportStore<CaseFile> caseFile = new ReportStore<CaseFile>();
-                    var caseFileCol = _database.GetCollection<ReportStore<CaseFile>>("reports");
-                    var update = Builders<ReportStore<CaseFile>>.Update.Set("updatedAt", time);
-                    caseFile.Data = await caseFileCol.UpdateOneAsync<ReportStore<CaseFile>>(x => x.Data.JobId == jobId && x.Data.ReportType == reportType, update);
-                    //await _dispatch.UpdateOneAsync(x => x.JobId == jobId && x.ReportType == reportType, update);
+                    var filter = Builders<CaseFile>.Filter.Eq(doc => doc.JobId, jobId) & Builders<CaseFile>.Filter.Eq(doc => doc.ReportType, reportType);
+                    var update = Builders<CaseFile>.Update.Set(doc => doc.updatedAt, time);
+                    await _caseFile.UpdateOneAsync(doc => doc.JobId == jobId && doc.ReportType == reportType, update);
                     break;
             }
-        }
-        public async Task<Employee> GetUser(string email)
-        {
-            var e = await _employeesCollection.Find(e => e.email == email).FirstOrDefaultAsync();
-            var user = new Employee
-            {
-                Id = e.Id,
-                certifications_id = e.certifications_id,
-                createdAt = e.createdAt,
-                email = e.email,
-                fullName = new FullName(e.fname, e.lname),
-                role = e.role,
-                id = e.id
-            };
-            return user;
-        }
-
-        public async Task<List<Employee>> GetUsers() =>
-            await _employeesCollection.Find(_ => true).ToListAsync();
-
-        public async Task CreateUser(Employee newUser)
-        {
-            var time = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
-            if (newUser is null) return;
-            newUser.createdAt = time;
-            newUser.updatedAt = time;
-            await _employeesCollection.InsertOneAsync(newUser);
         }
         private async Task HandleError(IHttpContextAccessor context, string message)
         {

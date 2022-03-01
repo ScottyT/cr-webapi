@@ -9,42 +9,77 @@ namespace cr_app_webapi
     [ApiController]
     [Route("api/[controller]")]
     [Authorize("read:users")]
+    [Authorize("create:user")]
     public class EmployeesController : ControllerBase
     {
         private AuthServices _authService;
-        private readonly IMongoDbClient _mongoService;
-        public EmployeesController(AuthServices authService, IMongoDbClient mongoService)
+        private readonly IMongoRepo<Employee> _userRepo;
+
+        public EmployeesController(AuthServices authService, IMongoRepo<Employee> userRepo)
         {
+            _userRepo = userRepo;
             _authService = authService;
-            _mongoService = mongoService;
         }
 
         [HttpGet]
-        public async Task<List<Employee>> Get()
+        public IEnumerable<Object> Get()
         {
-            var user = await _mongoService.GetUsers();
-            return user;
+            var user = _userRepo.FilterBy(
+                _ => true, projection => new
+                {
+                    email = projection.email,
+                    role = projection.role,
+                    team_id = projection.team_id,
+                    fullName = new FullName(projection.fname, projection.lname)
+                }
+            );
+            return user.ToList();
         }
             
 
         [HttpGet("{email}")]
-        public async Task<ActionResult<Object?>> GetUser(string email, string id)
+        public ActionResult<Object> GetUser(string email, string id)
         {
-            var authuser = await _authService.GetUser(id); //This gets the user data from Auth0
-            var userdata = await _mongoService.GetUser(email); //This gets the user data from the MongoDb database
-            if (authuser.Content is null)
+            var user = _userRepo.FilterBy(
+                filter => filter.email == email,
+                projection => new
+                {
+                    email = projection.email,
+                    fullName = new FullName(projection.fname, projection.lname).Name,
+                    team_id = projection.team_id,
+                    role = projection.role,
+                    picture = projection.picture,
+                    // Add certifications in the future
+                }
+            ).FirstOrDefault();
+            if (user is null)
             {
-                return NotFound();
+                return NoContent();
             }
-            var content = JsonSerializer.Deserialize<Object>(authuser.Content);
-            return content;
+            
+            return user;
         }
-
+        
         [HttpPost("create")]
-        public async Task<IActionResult> CreateUser(Employee newEmployee)
+        public async Task<IActionResult> CreateUser(UserObj? e)
         {
-            await _mongoService.CreateUser(newEmployee);
-            return CreatedAtAction(nameof(Get), new { _id = newEmployee._id }, newEmployee);
+            /* Object userInAuth0 = new 
+            {
+                connection = "Username-Password-Authentication",
+                email = newEmployee.email,
+                password = newEmployee
+            }; */
+            /* UserObj authUser = new UserObj
+            {
+                connection = "Username-Password-Authentication",
+                email = e.email,
+                password = e.password,
+                username = e.username,
+                user_metadata = e.user_metadata
+            }; */
+            //await _userRepo.SaveOneAsync(e.employee);
+            await _authService.CreateUser(e);
+            return CreatedAtAction(nameof(Get), new { }, "Successfully created new user!");
         }
     }
 }

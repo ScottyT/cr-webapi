@@ -2,25 +2,25 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 namespace cr_app_webapi.Services;
 public class GlobalLogic<TCollection, TContext>
-  where TCollection : IMongoCommon
-  where TContext : IMongoCommon, new()
+  where TCollection : Document
+  where TContext : Document, new()
 {
     public async Task<IEnumerable<TCollection>> GetAllAsync(IMongoCollection<TCollection> collection)
     {
         return await collection.Find(f => true).ToListAsync();
     }
 
-    public async Task<TCollection> GetOneAsync(IMongoCollection<TCollection> collection, TContext context)
+    /* public async Task<TCollection> GetOneAsync(IMongoCollection<TCollection> collection, TContext context)
     {
         return await collection.Find(new BsonDocument("_id", context.Id)).FirstOrDefaultAsync();
     }
-
     public async Task<TCollection> GetOneAsync(IMongoCollection<TCollection> collection, string id)
     {
+        var objectid = new ObjectId(id);
         return await GetOneAsync(collection, new TContext { Id = new ObjectId(id) });
-    }
+    } */
 
-    public async Task<IEnumerable<TCollection>> GetManyAsync(IMongoCollection<TCollection> collection,
+    /* public async Task<IEnumerable<TCollection>> GetManyAsync(IMongoCollection<TCollection> collection,
                                                              IEnumerable<TContext> contexts)
     {
         var list = new List<TCollection>();
@@ -32,9 +32,9 @@ public class GlobalLogic<TCollection, TContext>
         }
 
         return list;
-    }
+    } */
 
-    public async Task<IEnumerable<TCollection>> GetManyAsync(IMongoCollection<TCollection> collection,
+    /* public async Task<IEnumerable<TCollection>> GetManyAsync(IMongoCollection<TCollection> collection,
                                                              IEnumerable<string> ids)
     {
         var list = new List<TCollection>();
@@ -46,5 +46,5 @@ public class GlobalLogic<TCollection, TContext>
         }
 
         return list;
-    }
+    } */
 }

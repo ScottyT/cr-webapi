@@ -7,7 +7,6 @@ namespace cr_app_webapi.Models;
 
 public class CaseFile : Report
 {
-    public string? id {get; set;}
     public Object? location {get; set;}
     public Dictionary<int, string> selectedTmpRepairs {get; set;} = new Dictionary<int, string>();
     public Dictionary<int, object> selectedContent {get; set;} = new Dictionary<int, object>();

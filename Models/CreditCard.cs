@@ -3,11 +3,9 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace cr_app_webapi.Models;
 [BsonIgnoreExtraElements]
-public class CreditCard
+[BsonCollection("credit-cards")]
+public class CreditCard : Document
 {
-    [BsonId]
-    [BsonRepresentation(BsonType.ObjectId)]
-    public string? _id {get; set;}
     public string? ReportType {get; set;}
     public Object? cardholderInfo {get; set;}
     public Object? billingAddressFirst {get; set;}
@@ -21,6 +19,4 @@ public class CreditCard
     public string? customerSig {get; set;}
     public string? customerSignDate {get; set;}
     public string? teamMember {get; set;}
-    public DateTime createdAt {get; set;}
-    public DateTime updatedAt {get; set;}
 }

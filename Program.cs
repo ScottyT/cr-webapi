@@ -6,6 +6,7 @@ using cr_app_webapi.Services;
 using JwtAuthentication.AsymmetricEncryption.Certificates;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
@@ -35,6 +36,7 @@ builder.Services.AddAuthorization(options =>
     var domain = $"https://{builder.Configuration["Auth0:Domain"]}/";
     options.AddPolicy("read:users", policy => policy.Requirements.Add(new HasScopeRequirement("read:users", domain)));
     options.AddPolicy("read:reports", policy => policy.Requirements.Add(new HasScopeRequirement("read:reports", domain)));
+    options.AddPolicy("create:user", policy => policy.Requirements.Add(new HasScopeRequirement("create:user", domain)));
 });
 // Add services to the container.
 builder.Services.Configure<CodeRedDatabaseSettings>(
@@ -43,14 +45,13 @@ builder.Services.Configure<CodeRedDatabaseSettings>(
 builder.Services.Configure<Auth0Settings>(
     builder.Configuration.GetSection("Auth0")
 );
-builder.Services.AddSingleton<CodeRedServices>();
+builder.Services.AddScoped(typeof(IMongoRepo<>), typeof(MongoRepo<>));
 builder.Services.AddSingleton<AuthServices>();
+builder.Services.AddSingleton<ReportsService>();
 builder.Services.AddSingleton<IAuthorizationHandler, HasScopeHandler>();
-builder.Services.AddSingleton<IMongoDbClient>(
-    new MongoDbClient(
-        builder.Configuration["MongoDb:ConnectionString"], builder.Configuration["MongoDb:Database"]
-    )
-);
+
+builder.Services.AddSingleton<ICodeRedDatabaseSettings>(sp =>
+    sp.GetRequiredService<IOptions<CodeRedDatabaseSettings>>().Value);
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: MyCorsPolicy,
