@@ -2,6 +2,7 @@ using cr_app_webapi.Models;
 using cr_app_webapi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MongoDB.Driver;
 using System.Text.Json;
 
 namespace cr_app_webapi.Controllers;
@@ -15,9 +16,11 @@ public class ReportsController : ControllerBase
     private readonly IMongoRepo<Report> _report;
     private readonly ReportsService _reportsService;
     private readonly IMongoRepo<CreditCard> _creditCard;
+    private readonly ICodeRedDatabaseSettings _settings;
     
-    public ReportsController(IMongoRepo<Report> mongoReport, ReportsService reportsService, IMongoRepo<CreditCard> creditCard)
+    public ReportsController(IMongoRepo<Report> mongoReport, ReportsService reportsService, IMongoRepo<CreditCard> creditCard, ICodeRedDatabaseSettings settings)
     {
+        _settings = settings;
         _report = mongoReport;
         _reportsService = reportsService;
         _creditCard = creditCard;
@@ -26,11 +29,14 @@ public class ReportsController : ControllerBase
     public IQueryable<Report> GetAll() =>
         _report.AsQueryable();
 
-    [HttpGet("{id:length(24)}")]
-    public async Task<ActionResult<Object>> GetReport(string id)
+    [HttpGet("details/{reportType}/{id}")]
+    public async Task<ActionResult<Object>> GetReport(string id, string reportType)
     {
-        var report = await _reportsService.GetReport(id);
-        
+        var report = await _reportsService.GetReport(id, reportType);
+        /* MongoRepo<CaseFile> cf = new MongoRepo<CaseFile>(_settings);
+        var test = cf.FilterBy(
+            filter => filter.JobId == id && filter.ReportType == reportType
+        ).FirstOrDefault(); */
         if (report is null)
         {
             return NotFound();
@@ -52,13 +58,45 @@ public class ReportsController : ControllerBase
         return report;
     }
 
-    [HttpPost("{reportType}/{jobid}/new")]
-    public async Task<IActionResult> Post([FromBody] Object report, string reportType, string jobid)
+    [HttpPost("{reportType}/new")]
+    public async Task<IActionResult> Post(Object report, string reportType)
     {
         var createdReport = JsonSerializer.Serialize(report);
         await _reportsService.CreateReport(reportType, createdReport);
         
         return CreatedAtAction(nameof(GetAll), "Successfully created report!");
+    }
+
+    [HttpPut("{reportType}/{id}/update")]
+    // Only used for the inventory-logs, and atmospheric-readings
+    public async Task<IActionResult> ReportsThatGetUpdated(Object updatedReport, string id, string reportType)
+    {
+        object? report = await GetReport(id, reportType);
+        if (report is null) 
+        {
+            return NotFound();
+        }
+        
+        var reportBody = JsonSerializer.Serialize(updatedReport);
+        await _reportsService.UpdateReport(reportBody, reportType, id);
+        
+        return Ok("Successfully submitted the report!");
+    }
+
+    [HttpPost("psychrometric-chart/update-chart")]
+    public async Task<IActionResult> CreatePsychrometric(Psychrometric report)
+    {
+        var r = JsonSerializer.Serialize(report);
+        await _reportsService.UpdatePsychrometricChart(r, report, "new");
+        return CreatedAtAction(nameof(GetAll), "Psychrometric chart saved successfully!");
+    }
+
+    [HttpPost("psychrometric-chart/update-progress")]
+    public async Task<IActionResult> UpdatePsychrometric(Psychrometric report)
+    {
+        var r = JsonSerializer.Serialize(report);
+        await _reportsService.UpdatePsychrometricChart(r, report, "update");
+        return CreatedAtAction(nameof(GetAll), "Psychrometric chart updated successfully!");
     }
     
     /* [HttpGet("{reportType}/{id}/certificate")]
@@ -90,22 +128,6 @@ public class ReportsController : ControllerBase
     {
         var reports = await _reportService.UserReports(email);
         return reports;
-    }
-
-    [HttpPost("psychrometric-chart/update-chart")]
-    public async Task<IActionResult> CreatePsychrometric(Psychrometric report)
-    {
-        var r = JsonSerializer.Serialize(report);
-        await _reportService.UpdatePsychrometricChart(r, report, "new");
-        return CreatedAtAction(nameof(GetAll), "Psychrometric chart saved successfully!");
-    }
-
-    [HttpPost("psychrometric-chart/update-progress")]
-    public async Task<IActionResult> UpdatePsychrometric(Psychrometric report)
-    {
-        var r = JsonSerializer.Serialize(report);
-        await _reportService.UpdatePsychrometricChart(r, report, "update");
-        return CreatedAtAction(nameof(GetAll), "Psychrometric chart updated successfully!");
     }
 
     [HttpPut("{reportType}/{id}/update")]

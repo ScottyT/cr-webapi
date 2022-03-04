@@ -13,7 +13,6 @@ public interface IMongoRepo<TDocument> where TDocument : IDocument
     Task<TDocument> GetOneAsync(string id);
     //Task<TDocument> GetManyAsync(IEnumerable<string> ids);
     Task SaveOneAsync(string json);
-    Task UpdateOneAsync(
-        Expression<Func<TDocument, bool>> filterExpression, 
-        UpdateDefinition<TDocument> updateExpression);
+    //Task UpdateOneAsync(string id);
+    Task FindOneAndUpdate(FilterDefinition<TDocument> filter, UpdateDefinition<TDocument> update);
 }

@@ -59,10 +59,17 @@ namespace cr_app_webapi.Services
             return Task.Run(() =>  _collection.InsertOneAsync(doc));
         }
 
-        public virtual Task UpdateOneAsync(Expression<Func<TDocument, bool>> filterExression,
-            UpdateDefinition<TDocument> updateExpression)
+        /* public virtual Task UpdateOneAsync(string id)
         {
-            return Task.Run(() => _collection.UpdateOneAsync(filterExression, updateExpression));
+            var filters = Builders<TDocument>.Filter.Eq(doc => doc.Id, id);
+            var update = Builders<TDocument>.Update.
+            return Task.Run(() => _collection.FindOneAndUpdateAsync(filters, updateExpression));
+        } */
+
+        public async Task FindOneAndUpdate(FilterDefinition<TDocument> filter, UpdateDefinition<TDocument> update)
+        {
+            var options = new FindOneAndUpdateOptions<TDocument> { IsUpsert = true };
+            await _collection.FindOneAndUpdateAsync(filter, update, options);
         }
     }
 }
