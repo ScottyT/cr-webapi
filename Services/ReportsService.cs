@@ -4,9 +4,6 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using cr_app_webapi.Models;
 using MongoDB.Bson;
-using MongoDB.Bson.IO;
-using MongoDB.Bson.Serialization;
-using MongoDB.Bson.Serialization.Serializers;
 using MongoDB.Driver;
 
 namespace cr_app_webapi.Services
@@ -41,7 +38,6 @@ namespace cr_app_webapi.Services
                 var jsonRep = JsonDocument.Parse(report);
                 var rootElement = jsonRep.RootElement.GetType();
 
-                //var deser = JsonSerializer.Deserialize<T>(c);
                 T? c = JsonSerializer.Deserialize<T>(report);
                 if (c is not null)
                 {
@@ -59,66 +55,17 @@ namespace cr_app_webapi.Services
                 return;
             }
             var time = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
-            ReportLogic<Dispatch> d = new ReportLogic<Dispatch>();
-            ReportLogic<RapidResponse> rapid = new ReportLogic<RapidResponse>();
-            ReportLogic<CaseFile> cf = new ReportLogic<CaseFile>();
-            ReportLogic<Upholstery> u = new ReportLogic<Upholstery>();
-            ReportLogic<ServiceAgreement> ser = new ReportLogic<ServiceAgreement>();
-            ReportLogic<QualityControl> qual = new ReportLogic<QualityControl>();
-            ReportLogic<CertificateOfCompletion> coc = new ReportLogic<CertificateOfCompletion>();
-            ReportLogic<AssignmentOfBenefits> aob = new ReportLogic<AssignmentOfBenefits>();
-            //ReportLogic<BsonDocument> bs = new ReportLogic<BsonDocument>();
+
             var bsonConvert = BsonDocument.Parse(report);
             bsonConvert.Add("createdAt", time);
             bsonConvert.Add("updatedAt", time);
             await _bsonCol.InsertOneAsync(bsonConvert);
-            /* switch (reportType)
-            {
-                case "dispatch":
-                    var dispatchCol = _database.GetCollection<Dispatch>("reports");
-                    //await d.Create(dispatchCol, report);
-                    
-                    break;
-                case "rapid-response":
-                    var rapidCol = _database.GetCollection<RapidResponse>("reports");
-                    await rapid.Create(rapidCol, report);
-                    break;
-                case "containment-sheet":
-                case "tech-sheet":
-                    var caseFileCol = _database.GetCollection<CaseFile>("reports");
-                    await cf.Create(caseFileCol, report);
-                    break;
-                case "quality-control":
-                    var qualityCol = _database.GetCollection<QualityControl>("reports");
-                    await qual.Create(qualityCol, report);
-                    break;
-                case "upholstery-form":
-                    var upholstery = _database.GetCollection<Upholstery>("reports");
-                    await u.Create(upholstery, report);
-                    break;
-            }
-            if (reportType.Contains("coc"))
-            {
-                await coc.Create(_certificate, report);
-                return;
-            }
-            if (reportType.Contains("aob"))
-            {
-                await aob.Create(_assignmentOfBenefits, report);
-                return;
-            }
-            if (reportType.Contains("contracting-agreement"))
-            {
-                var contractCol = _database.GetCollection<ServiceAgreement>("reports");
-                await ser.Create(contractCol, report);
-                return;
-            } */
         }
 
         public List<object> GetContract(string reportType, string id)
         {
             List<Object> returnList = new List<object>();
-            if (reportType.Contains("coc") && reportType.Contains("aob"))
+            if (reportType.Contains("coc"))
             {
                 var q = from cert in _certificate.AsQueryable().AsEnumerable().Where(x => x.JobId == id && x.ReportType == reportType)
                         join card in _creditCard.AsQueryable() on
@@ -157,16 +104,8 @@ namespace cr_app_webapi.Services
         public async Task<Object?> GetReport(string id, string reportType)
         {
             var reportCollection = _database.GetCollection<Report>("reports");
-            dynamic report = await reportCollection.Find(r => r.JobId == id && r.ReportType == reportType).As<Object>().FirstOrDefaultAsync();
-            foreach(KeyValuePair<string, object> kvp in report)
-            {
-                var key = kvp.Key;
-                var value = kvp.Value;
-                /* if (value == "")
-                {
-                    value = "N/A";
-                } */
-            }
+            var projectionBuilder = Builders<Report>.Projection.Exclude(doc => doc.Id);
+            var report = await reportCollection.Find(r => r.JobId == id && r.ReportType == reportType).As<Object>().FirstOrDefaultAsync();
             return report;
         }
 
@@ -234,7 +173,7 @@ namespace cr_app_webapi.Services
             }
             updateDef.Add(Builders<BsonDocument>.Update.Set("updatedAt", time));
             var update = Builders<BsonDocument>.Update.Combine(updateDef);
-            
+
             await _bsonCol.UpdateOneAsync(filter, update, updateOptions);
             /* switch (reportType)
             {
@@ -260,7 +199,7 @@ namespace cr_app_webapi.Services
             var properties = obj.GetType().GetProperties();
             UpdateDefinition<T> definition = null;
 
-            foreach(var property in properties)
+            foreach (var property in properties)
             {
                 if (definition == null)
                 {

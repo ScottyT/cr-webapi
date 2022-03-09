@@ -14,5 +14,6 @@ public interface IMongoRepo<TDocument> where TDocument : IDocument
     //Task<TDocument> GetManyAsync(IEnumerable<string> ids);
     Task SaveOneAsync(string json);
     //Task UpdateOneAsync(string id);
+    Task InsertOneAsync(TDocument document); // This method is just like SaveOneAsync except in takes a generic as a parameter
     Task FindOneAndUpdate(FilterDefinition<TDocument> filter, UpdateDefinition<TDocument> update);
 }

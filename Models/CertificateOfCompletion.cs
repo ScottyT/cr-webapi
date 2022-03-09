@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
@@ -8,8 +9,12 @@ public class CertificateOfCompletion : Report
     public string? subjectProperty {get; set;}
     public string? deductible {get; set;}
     public string? insuredMinEndDate {get; set;}
-    public Object? insuredPayment1 {get; set;}
-    public Object? insuredPayment2 {get; set;}
+
+    [JsonConverter(typeof(DictionaryStringObjectJsonConverter))]
+    public Dictionary<string, object>? insuredPayment1 {get; set;}
+
+    [JsonConverter(typeof(DictionaryStringObjectJsonConverter))]
+    public Dictionary<string, object>? insuredPayment2 {get; set;}
     public string? nonInsuredMinEndDate {get; set;}
     public string? nonInsuredPayment1 {get; set;}
     public string? nonInsuredPayment2 {get; set;}

@@ -45,6 +45,32 @@ public class ReportsController : ControllerBase
         return report;
     }
 
+    [HttpGet("{reportType}/{id}/aob")]
+    public ActionResult<AssignmentOfBenefits> GetAobReport(string id, string reportType)
+    {
+        var report = _reportsService.GetContract(reportType, id).FirstOrDefault();
+        if (report is null)
+        {
+            return NoContent();
+        }
+        var result = (Aob)report;
+        result.AOB.creditCard = result.creditCard;
+        return result.AOB;
+    }
+
+    [HttpGet("{reportType}/{id}/certificate")]
+    public ActionResult<CertificateOfCompletion> GetCertReport(string id, string reportType)
+    {
+        var report = _reportsService.GetContract(reportType, id).FirstOrDefault();
+        if (report is null)
+        {
+            return NoContent();
+        }
+        var result = (Certificate)report;
+        result.Cert.creditCard = result.creditCard;
+        return result.Cert;
+    }
+
     [HttpGet("user/{email}")]
     public ActionResult<Report> GetUserReports(string email)
     {
@@ -59,9 +85,17 @@ public class ReportsController : ControllerBase
     }
 
     [HttpPost("{reportType}/new")]
-    public async Task<IActionResult> Post(Object report, string reportType)
+    public async Task<IActionResult> Post(Object newReport, string reportType, string jobid)
     {
-        var createdReport = JsonSerializer.Serialize(report);
+        var report = _report.FilterBy(
+            filter => filter.JobId == jobid && filter.ReportType == reportType
+        ).FirstOrDefault();
+        if (report is not null)
+        {
+            return Ok(new {error = true, message = "A report of this type and job id already exsits."});
+        }
+        
+        var createdReport = JsonSerializer.Serialize(newReport);
         await _reportsService.CreateReport(reportType, createdReport);
         
         return CreatedAtAction(nameof(GetAll), "Successfully created report!");
@@ -99,30 +133,7 @@ public class ReportsController : ControllerBase
         return CreatedAtAction(nameof(GetAll), "Psychrometric chart updated successfully!");
     }
     
-    /* [HttpGet("{reportType}/{id}/certificate")]
-    public ActionResult<CertificateOfCompletion> GetCertReport(string id, string reportType)
-    {
-        var report = _reportService.GetContract(reportType, id).FirstOrDefault();
-        if (report is null)
-        {
-            return NoContent();
-        }
-        var result = (Certificate)report;
-        result.Cert.creditCard = result.creditCard;
-        return result.Cert;
-    }
-    [HttpGet("{reportType}/{id}/aob")]
-    public ActionResult<AssignmentOfBenefits> GetAobReport(string id, string reportType)
-    {
-        var report = _reportService.GetContract(reportType, id).FirstOrDefault();
-        if (report is null)
-        {
-            return NoContent();
-        }
-        var result = (Aob)report;
-        result.AOB.creditCard = result.creditCard;
-        return result.AOB;
-    }
+    /* 
     [HttpGet("{email}/employee")]
     public async Task<List<Report>> GetUserReports(string email)
     {

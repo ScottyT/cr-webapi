@@ -71,5 +71,10 @@ namespace cr_app_webapi.Services
             var options = new FindOneAndUpdateOptions<TDocument> { IsUpsert = true };
             await _collection.FindOneAndUpdateAsync(filter, update, options);
         }
+        
+        public virtual Task InsertOneAsync(TDocument document)
+        {
+            return Task.Run(() => _collection.InsertOneAsync(document));
+        }
     }
 }
