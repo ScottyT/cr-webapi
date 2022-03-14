@@ -3,12 +3,10 @@ using System.Text.Json.Serialization;
 using cr_app_webapi;
 using cr_app_webapi.Models;
 using cr_app_webapi.Services;
-using JwtAuthentication.AsymmetricEncryption.Certificates;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
 
 var MyCorsPolicy = "corsPolicy";
 var builder = WebApplication.CreateBuilder(args);
@@ -47,7 +45,7 @@ builder.Services.Configure<Auth0Settings>(
 );
 builder.Services.AddScoped(typeof(IMongoRepo<>), typeof(MongoRepo<>));
 builder.Services.AddSingleton<AuthServices>();
-builder.Services.AddSingleton<ReportsService>();
+builder.Services.AddTransient<ReportsService>();
 builder.Services.AddSingleton<IAuthorizationHandler, HasScopeHandler>();
 
 builder.Services.AddSingleton<ICodeRedDatabaseSettings>(sp =>
@@ -57,7 +55,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: MyCorsPolicy,
     builder =>
     {
-        builder.WithOrigins("http://localhost:3000", "https://staging-174a0.web.app")
+        builder.WithOrigins("http://localhost:3000", "https://staging-174a0.web.app", "https://code-red-app-313517.web.app")
             .AllowCredentials()
             .WithHeaders("Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization")
             .WithMethods("OPTIONS", "GET", "POST", "PUT", "DELETE");

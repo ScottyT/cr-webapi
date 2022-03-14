@@ -22,7 +22,7 @@ public class CaseFile : Report
     public Dictionary<int, object> projectWorkPlans {get; set;} = new Dictionary<int, object>();
     public string? notes {get; set;} 
     public string? afterHoursWork {get; set;} 
-    public List<object> evaluationLogs {get; set;} = new List<object>();
+    //public List<object> evaluationLogs {get; set;} = new List<object>();
     public Boolean verifySign {get; set;} 
     public string? numberOfDehus {get; set;}
     public string? waterGallons {get; set;} 

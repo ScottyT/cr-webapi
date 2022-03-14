@@ -17,8 +17,9 @@ namespace cr_app_webapi.Services
         private readonly IMongoCollection<CreditCard> _creditCard;
         private readonly IMongoCollection<CaseFile> _caseFile;
         private readonly IMongoCollection<BsonDocument> _bsonCol;
+        private readonly IMongoRepo<InventoryModel> _image; //this might not work
 
-        public ReportsService(ICodeRedDatabaseSettings settings)
+        public ReportsService(ICodeRedDatabaseSettings settings, IMongoRepo<InventoryModel> image)
         {
             _database = new MongoClient(settings.ConnectionString).GetDatabase(settings.DatabaseName);
             _creditCard = _database.GetCollection<CreditCard>("credit-cards");
@@ -27,6 +28,7 @@ namespace cr_app_webapi.Services
             _assignmentOfBenefits = _database.GetCollection<AssignmentOfBenefits>("reports");
             _contextAccessor = new HttpContextAccessor();
             _bsonCol = _database.GetCollection<BsonDocument>("reports");
+            _image = image;
         }
 
         // Generics for report

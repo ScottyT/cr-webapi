@@ -61,7 +61,7 @@ namespace cr_app_webapi
         }
         
         [HttpPost("create")]
-        public async Task<IActionResult> CreateUser(UserObj? e)
+        public async Task<IActionResult> CreateUser(UserObj e)
         {
             /* Object userInAuth0 = new 
             {
@@ -78,6 +78,7 @@ namespace cr_app_webapi
                 user_metadata = e.user_metadata
             }; */
             //await _userRepo.SaveOneAsync(e.employee);
+            if (e is null) return BadRequest();
             await _authService.CreateUser(e);
             return CreatedAtAction(nameof(Get), new { }, "Successfully created new user!");
         }

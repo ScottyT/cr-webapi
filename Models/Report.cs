@@ -1,4 +1,4 @@
-using MongoDB.Bson;
+using System.Text.Json.Serialization;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace cr_app_webapi.Models
@@ -17,5 +17,8 @@ namespace cr_app_webapi.Models
         public string? formType {get; set;}
         public TeamMember teamMember {get; set;} = new TeamMember();
         public string? date {get; set;}
+
+        //[JsonConverter(typeof(ListObjectJsonConverter))]
+        public List<object>? evaluationLogs {get; set;}
     }
 }

@@ -10,7 +10,7 @@ public class RapidResponse : Report
     public Object? ContactName {get; set;}
     public string? DateOfEvaluation {get; set;}
     public string? emailAddress {get; set;}
-    public List<object> evaluationLogs {get; set;} = new List<object>();
+    //public List<object> evaluationLogs {get; set;} = new List<object>();
     public List<string> documentVerification {get; set;} = new List<string>();
     public string? InsuranceCompany {get; set;}
     public string? phoneNumber {get; set;}
