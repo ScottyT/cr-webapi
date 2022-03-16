@@ -43,7 +43,7 @@ builder.Services.Configure<CodeRedDatabaseSettings>(
 builder.Services.Configure<Auth0Settings>(
     builder.Configuration.GetSection("Auth0")
 );
-builder.Services.AddScoped(typeof(IMongoRepo<>), typeof(MongoRepo<>));
+builder.Services.AddScoped(typeof(IMongoRepo<,>), typeof(MongoRepo<,>));
 builder.Services.AddSingleton<AuthServices>();
 builder.Services.AddTransient<ReportsService>();
 builder.Services.AddSingleton<IAuthorizationHandler, HasScopeHandler>();

@@ -5,15 +5,17 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 namespace cr_app_webapi.Services
 {
-    public class MongoRepo<TDocument> : IMongoRepo<TDocument>
-        where TDocument : IDocument
+    public class MongoRepo<TDocument, TForeign> : IMongoRepo<TDocument, TForeign>
+        where TDocument : IDocument, new()
     {
         private readonly IMongoCollection<TDocument> _collection;
+        private readonly IMongoCollection<TForeign> _foreignCollection;
 
         public MongoRepo(ICodeRedDatabaseSettings settings)
         {
             var database = new MongoClient(settings.ConnectionString).GetDatabase(settings.DatabaseName);
             _collection = database.GetCollection<TDocument>(GetCollectionName(typeof(TDocument)));
+            _foreignCollection = database.GetCollection<TForeign>(GetCollectionName(typeof(TForeign)));
         }
 
         private protected string GetCollectionName(Type documentType)
@@ -38,6 +40,13 @@ namespace cr_app_webapi.Services
             Expression<Func<TDocument, TProjected>> projectionExpression)
         {
             return _collection.Find(filterExpression).Project(projectionExpression).ToEnumerable();
+        }
+        
+        public IEnumerable<TProjected> FindAndJoin<TProjected>(Expression<Func<TDocument, bool>> matchExpression, 
+            Expression<Func<TDocument, object>> localField, Expression<Func<TForeign, object>> foreignField,
+            Expression<Func<TProjected, object>> joined)
+        {
+            return _collection.Aggregate().Match(matchExpression).Lookup(_foreignCollection, localField, foreignField, joined).ToEnumerable();
         }
 
         public virtual Task<TDocument> GetOneAsync(string id)
@@ -66,10 +75,10 @@ namespace cr_app_webapi.Services
             return Task.Run(() => _collection.FindOneAndUpdateAsync(filters, updateExpression));
         } */
 
-        public async Task FindOneAndUpdate(FilterDefinition<TDocument> filter, UpdateDefinition<TDocument> update)
+        public async Task FindOneAndUpdate<TProjected>(FilterDefinition<TDocument> filter, UpdateDefinition<TDocument> update, 
+            FindOneAndUpdateOptions<TDocument, TProjected> updateOptions)
         {
-            var options = new FindOneAndUpdateOptions<TDocument> { IsUpsert = true };
-            await _collection.FindOneAndUpdateAsync(filter, update, options);
+            await _collection.FindOneAndUpdateAsync(filter, update, updateOptions);
         }
         
         public virtual Task InsertOneAsync(TDocument document)

@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
@@ -22,7 +23,9 @@ public class CreditCard : Document
     public string? expirationDate {get; set;}
     public string? cvvNum {get; set;}
     public string? cardholderZip {get; set;}
-    public string? cardNumber {get; set;}
+
+   // [ForeignKey("cardNumber")]
+    public string cardNumber {get; set;} = default!;
     public string? customerSig {get; set;}
     public string? customerSignDate {get; set;}
 }

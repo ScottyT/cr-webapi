@@ -10,8 +10,8 @@ namespace cr_app_webapi.Controllers
     [Authorize("read:reports")]
     public class CreditCardController : ControllerBase
     {
-        private readonly IMongoRepo<CreditCard> _creditCard;
-        public CreditCardController(IMongoRepo<CreditCard> creditCard)
+        private readonly IMongoRepo<CreditCard,CreditCard> _creditCard;
+        public CreditCardController(IMongoRepo<CreditCard,CreditCard> creditCard)
         {
             _creditCard = creditCard;
         }

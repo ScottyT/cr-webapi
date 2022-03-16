@@ -9,8 +9,8 @@ namespace cr_app_webapi.Controllers;
 [Route("api/[controller]")]
 public class CertificationsController : ControllerBase
 {
-    private readonly IMongoRepo<Certification> _certification;
-    public CertificationsController(IMongoRepo<Certification> certification)
+    private readonly IMongoRepo<Certification,Certification> _certification;
+    public CertificationsController(IMongoRepo<Certification,Certification> certification)
     {
         _certification = certification;
     }

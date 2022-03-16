@@ -13,9 +13,9 @@ namespace cr_app_webapi
     public class EmployeesController : ControllerBase
     {
         private AuthServices _authService;
-        private readonly IMongoRepo<Employee> _userRepo;
+        private readonly IMongoRepo<Employee,Employee> _userRepo;
 
-        public EmployeesController(AuthServices authService, IMongoRepo<Employee> userRepo)
+        public EmployeesController(AuthServices authService, IMongoRepo<Employee,Employee> userRepo)
         {
             _userRepo = userRepo;
             _authService = authService;

@@ -11,14 +11,14 @@ namespace cr_app_webapi.Controllers
     [Authorize]
     public class ImageController : ControllerBase
     {
-        private readonly IMongoRepo<InventoryModel> _image;
-        public ImageController(IMongoRepo<InventoryModel> image)
+        private readonly IMongoRepo<InventoryImage,InventoryImage> _image;
+        public ImageController(IMongoRepo<InventoryImage,InventoryImage> image)
         {
             _image = image;
         }
 
         [HttpGet("inventory")]
-        public List<InventoryModel> GetAll()
+        public List<InventoryImage> GetAll()
         {
             return _image.AsQueryable().ToList();
         }
@@ -40,7 +40,7 @@ namespace cr_app_webapi.Controllers
         [HttpGet()]
 
         [HttpPost("upload/content-inventory-image")]
-        public async Task<IActionResult> UploadImage([FromForm] InventoryModel data)
+        public async Task<IActionResult> UploadImage([FromForm] InventoryImage data)
         {
             IFormFile? image = Request.Form.Files.FirstOrDefault();
             if (image.Length <= 0) return BadRequest("Empty file");
@@ -58,14 +58,14 @@ namespace cr_app_webapi.Controllers
                 contentType = image?.ContentType
             };
 
-            InventoryModel formData = new InventoryModel()
+            InventoryImage formData = new InventoryImage()
             {
                 img = img,
                 JobId = data.JobId,
                 ItemNumber = data.ItemNumber
             };
             await _image.InsertOneAsync(formData);
-            return CreatedAtAction(nameof(GetAll), "Uploaded image.");
+            return CreatedAtAction(nameof(GetAll), new { id = formData.Id, message = "Uploaded image" });
         }
     }
 }

@@ -5,9 +5,9 @@ namespace cr_app_webapi.Models
 {
     [BsonIgnoreExtraElements]
     [BsonCollection("inventory.images")]
-    public class InventoryModel : Document
+    public class InventoryImage : Document
     {
-        public InventoryModel()
+        public InventoryImage()
         {
             createdAt = DateTime.Now;
             updatedAt = DateTime.Now;

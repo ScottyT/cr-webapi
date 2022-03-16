@@ -1,7 +1,4 @@
-using cr_app_webapi.Models;
-using JwtAuthentication.AsymmetricEncryption.Certificates;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.Extensions.Options;
 
 public class HasScopeHandler : AuthorizationHandler<HasScopeRequirement>
 {

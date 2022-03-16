@@ -17,9 +17,9 @@ namespace cr_app_webapi.Services
         private readonly IMongoCollection<CreditCard> _creditCard;
         private readonly IMongoCollection<CaseFile> _caseFile;
         private readonly IMongoCollection<BsonDocument> _bsonCol;
-        private readonly IMongoRepo<InventoryModel> _image; //this might not work
+        private readonly IMongoRepo<InventoryModel,InventoryModel> _image; //this might not work
 
-        public ReportsService(ICodeRedDatabaseSettings settings, IMongoRepo<InventoryModel> image)
+        public ReportsService(ICodeRedDatabaseSettings settings, IMongoRepo<InventoryModel,InventoryModel> image)
         {
             _database = new MongoClient(settings.ConnectionString).GetDatabase(settings.DatabaseName);
             _creditCard = _database.GetCollection<CreditCard>("credit-cards");
@@ -29,25 +29,6 @@ namespace cr_app_webapi.Services
             _contextAccessor = new HttpContextAccessor();
             _bsonCol = _database.GetCollection<BsonDocument>("reports");
             _image = image;
-        }
-
-        // Generics for report
-        public class ReportLogic<T> where T : Report, new()
-        {
-            public async Task Create(IMongoCollection<T> collection, string report)
-            {
-                var time = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
-                var jsonRep = JsonDocument.Parse(report);
-                var rootElement = jsonRep.RootElement.GetType();
-
-                T? c = JsonSerializer.Deserialize<T>(report);
-                if (c is not null)
-                {
-                    c.createdAt = time;
-                    c.updatedAt = time;
-                    await collection.InsertOneAsync(c);
-                }
-            }
         }
 
         public async Task CreateReport(string reportType, string report)
@@ -62,45 +43,6 @@ namespace cr_app_webapi.Services
             bsonConvert.Add("createdAt", time);
             bsonConvert.Add("updatedAt", time);
             await _bsonCol.InsertOneAsync(bsonConvert);
-        }
-
-        public List<object> GetContract(string reportType, string id)
-        {
-            List<Object> returnList = new List<object>();
-            if (reportType.Contains("coc"))
-            {
-                var q = from cert in _certificate.AsQueryable().AsEnumerable().Where(x => x.JobId == id && x.ReportType == reportType)
-                        join card in _creditCard.AsQueryable() on
-                        cert.card_id equals card.cardNumber
-                        select new Certificate(cert, card);
-                if (q.Count() <= 0)
-                {
-                    var c = (from cert in _certificate.AsQueryable().AsEnumerable()
-                             where cert.JobId == id
-                             where cert.ReportType == reportType
-                             select new Certificate { Cert = cert });
-                    returnList = c.Cast<object>().ToList();
-                }
-                else returnList = q.Cast<object>().ToList();
-            }
-            else if (reportType.Contains("aob"))
-            {
-                var q = (from aob in _assignmentOfBenefits.AsQueryable().AsEnumerable().Where(x => x.JobId == id && x.ReportType == reportType)
-                         join card in _creditCard.AsQueryable() on
-                         aob.cardNumber equals card.cardNumber
-                         select new Aob(aob, card));
-
-                if (q.Count() <= 0)
-                {
-                    var a = (from aob in _assignmentOfBenefits.AsQueryable().AsEnumerable()
-                             where aob.JobId == id
-                             where aob.ReportType == reportType
-                             select new Aob { AOB = aob });
-                    returnList = a.Cast<object>().ToList();
-                }
-                else returnList = q.Cast<object>().ToList();
-            }
-            return returnList;
         }
 
         public async Task<Object?> GetReport(string id, string reportType)

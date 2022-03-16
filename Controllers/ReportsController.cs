@@ -12,18 +12,25 @@ namespace cr_app_webapi.Controllers;
 [Authorize("read:reports")]
 public class ReportsController : ControllerBase
 {
-    //private readonly ReportService _reportService;
-    private readonly IMongoRepo<Report> _report;
+    private readonly IMongoRepo<Report, Report> _report;
     private readonly ReportsService _reportsService;
-    private readonly IMongoRepo<CreditCard> _creditCard;
+    private readonly IMongoRepo<CreditCard, CreditCard> _creditCard;
+    private readonly IMongoRepo<CertificateOfCompletion, CreditCard> _coc;
+    private readonly IMongoRepo<AssignmentOfBenefits, CreditCard> _aob;
+    private readonly IMongoRepo<InventoryModel, InventoryImage> _contentInventory;
     private readonly ICodeRedDatabaseSettings _settings;
-    
-    public ReportsController(IMongoRepo<Report> mongoReport, ReportsService reportsService, IMongoRepo<CreditCard> creditCard, ICodeRedDatabaseSettings settings)
+
+    public ReportsController(IMongoRepo<Report, Report> mongoReport, ReportsService reportsService, IMongoRepo<CreditCard, CreditCard> creditCard,
+        ICodeRedDatabaseSettings settings, IMongoRepo<CertificateOfCompletion, CreditCard> coc, IMongoRepo<AssignmentOfBenefits, CreditCard> aob, 
+        IMongoRepo<InventoryModel, InventoryImage> contentInventory)
     {
         _settings = settings;
         _report = mongoReport;
         _reportsService = reportsService;
         _creditCard = creditCard;
+        _coc = coc;
+        _aob = aob;
+        _contentInventory = contentInventory;
     }
     [HttpGet]
     public IQueryable<Report> GetAll() =>
@@ -37,38 +44,54 @@ public class ReportsController : ControllerBase
         var test = cf.FilterBy(
             filter => filter.JobId == id && filter.ReportType == reportType
         ).FirstOrDefault(); */
+        if (reportType == "personal-content-inventory")
+        {
+            report = _contentInventory.FindAndJoin<InventoryModel>(
+                f => f.JobId == id && f.ReportType == reportType,
+                l => l.JobId, foreign => foreign.JobId, j => j.inventoryImages
+            ).Cast<object>();
+        }
         if (report is null)
         {
             return NotFound();
         }
-        
+        if (reportType == "personal-content-inventory")
+        {
+
+        }
+
         return report;
     }
 
     [HttpGet("{reportType}/{id}/aob")]
     public ActionResult<AssignmentOfBenefits> GetAobReport(string id, string reportType)
     {
-        var report = _reportsService.GetContract(reportType, id).FirstOrDefault();
+        var report = _aob.FindAndJoin<AssignmentOfBenefits>(
+            f => f.JobId == id && f.ReportType == reportType,
+            l => l.cardNumber, foreign => foreign.cardNumber,
+            j => j.creditCard
+        ).FirstOrDefault();
         if (report is null)
         {
-            return NoContent();
+            return NotFound("No report found of this job id");
         }
-        var result = (Aob)report;
-        result.AOB.creditCard = result.creditCard;
-        return result.AOB;
+
+        return report;
     }
 
     [HttpGet("{reportType}/{id}/certificate")]
     public ActionResult<CertificateOfCompletion> GetCertReport(string id, string reportType)
     {
-        var report = _reportsService.GetContract(reportType, id).FirstOrDefault();
+        var report = _coc.FindAndJoin<CertificateOfCompletion>(
+            f => f.JobId == id && f.ReportType == reportType,
+            x => x.cardNumber, y => y.cardNumber, x => x.creditCard
+        ).FirstOrDefault();
         if (report is null)
         {
-            return NoContent();
+            return NotFound("No report found of this job id");
         }
-        var result = (Certificate)report;
-        result.Cert.creditCard = result.creditCard;
-        return result.Cert;
+
+        return report;
     }
 
     [HttpGet("user/{email}")]
@@ -88,16 +111,16 @@ public class ReportsController : ControllerBase
     public async Task<IActionResult> Post(Object newReport, string reportType, string jobid)
     {
         var report = _report.FilterBy(
-            filter => filter.JobId == jobid && filter.ReportType == reportType
+            filter => filter.JobId == jobid && filter.formType != "case-report"
         ).FirstOrDefault();
         if (report is not null)
         {
-            return Ok(new {error = true, message = "A report of this type and job id already exsits."});
+            return Ok(new { error = true, message = "A report of this type and job id already exsits." });
         }
-        
+
         var createdReport = JsonSerializer.Serialize(newReport);
         await _reportsService.CreateReport(reportType, createdReport);
-        
+
         return CreatedAtAction(nameof(GetAll), "Successfully created report!");
     }
 
@@ -105,15 +128,15 @@ public class ReportsController : ControllerBase
     // Only used for the inventory-logs, and atmospheric-readings
     public async Task<IActionResult> ReportsThatGetUpdated(Object updatedReport, string id, string reportType)
     {
-        object? report = await GetReport(id, reportType);
-        if (report is null) 
+        /* object? report = await GetReport(id, reportType);
+        if (report is null)
         {
             return NotFound();
-        }
-        
+        } */
+
         var reportBody = JsonSerializer.Serialize(updatedReport);
         await _reportsService.UpdateReport(reportBody, reportType, id);
-        
+
         return Ok("Successfully submitted the report!");
     }
 
@@ -132,7 +155,6 @@ public class ReportsController : ControllerBase
         await _reportsService.UpdatePsychrometricChart(r, report, "update");
         return CreatedAtAction(nameof(GetAll), "Psychrometric chart updated successfully!");
     }
-    
     /* 
     [HttpGet("{email}/employee")]
     public async Task<List<Report>> GetUserReports(string email)

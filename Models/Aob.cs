@@ -4,6 +4,7 @@ using MongoDB.Bson.Serialization.Attributes;
 namespace cr_app_webapi.Models;
 
 [BsonIgnoreExtraElements]
+[BsonCollection("reports")]
 public class AssignmentOfBenefits : Report
 {
     public string? contractingCompany { get; set; }
@@ -44,13 +45,9 @@ public class AssignmentOfBenefits : Report
     public string? paymentOption { get; set; }
     public string? cusSign2 { get; set; }
     public string? cusSignDate2 { get; set; }
-    [BsonElement("cardNumber")]
-    public string? cardNumber { get; set; }
-    [BsonIgnore]
-    public CreditCard? creditCard { get; set; } = new CreditCard();
+    public string cardNumber { get; set; } = default!;
+    public IEnumerable<CreditCard> creditCard {get; set;} = default!;
 }
-
-public record struct Aob(AssignmentOfBenefits? AOB, CreditCard creditCard);
 
 // THIS IS USED ONLY FOR AOB REPORTS! DON'T USE IT FOR OTHER REPORTS!!
 public class Location
