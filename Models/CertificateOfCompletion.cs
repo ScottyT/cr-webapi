@@ -11,10 +11,10 @@ public class CertificateOfCompletion : Report
     public string? deductible {get; set;}
     public string? insuredMinEndDate {get; set;}
 
-    [JsonConverter(typeof(DictionaryStringObjectJsonConverter))]
+    //[JsonConverter(typeof(DictionaryTKeyEnumValueConverter))]
     public Dictionary<string, object>? insuredPayment1 {get; set;}
 
-    [JsonConverter(typeof(DictionaryStringObjectJsonConverter))]
+    //[JsonConverter(typeof(DictionaryTKeyEnumValueConverter))]
     public Dictionary<string, object>? insuredPayment2 {get; set;}
     public string? nonInsuredMinEndDate {get; set;}
     public string? nonInsuredPayment1 {get; set;}

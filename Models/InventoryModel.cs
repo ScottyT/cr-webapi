@@ -14,7 +14,7 @@ namespace cr_app_webapi.Models
         public Boolean techSig {get; set;}
         public string? cusSig {get ;set;}
         public List<string> image_ids {get; set;} = new List<string>();
-        public IEnumerable<InventoryImage>? inventoryImages {get; set;}
-        public int totalAmount {get; set;}
+        public IEnumerable<InventoryImage> inventoryImages {get; set;} = default!;
+        public double totalAmount {get; set;}
     }
 }

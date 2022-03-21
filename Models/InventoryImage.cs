@@ -12,14 +12,18 @@ namespace cr_app_webapi.Models
             createdAt = DateTime.Now;
             updatedAt = DateTime.Now;
         }
-        public string? JobId {get; set;}
+        public string JobId {get; set;} = default!;
+        //public ImageModel? img {get; set;} //= new List<ImageModel>();
         public FileModel? img {get; set;}
+        [BsonIgnore]
         public string? ItemNumber {get; set;}
     }
 
     public class FileModel
     {
-        public byte[]? data {get; set;}
-        public string? contentType {get; set;}
+        public byte[]? data {get; set;} = default!;
+        public string? contentType {get; set;} = default!;
+        public long size {get; set;} = default!;
+        public string? filename {get; set;}
     }
 }

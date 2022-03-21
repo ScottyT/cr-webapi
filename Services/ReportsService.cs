@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Dynamic;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text.Json;
@@ -17,6 +19,7 @@ namespace cr_app_webapi.Services
         private readonly IMongoCollection<CreditCard> _creditCard;
         private readonly IMongoCollection<CaseFile> _caseFile;
         private readonly IMongoCollection<BsonDocument> _bsonCol;
+        private readonly IMongoCollection<InventoryImage> _imagesBson;
         private readonly IMongoRepo<InventoryModel,InventoryModel> _image; //this might not work
 
         public ReportsService(ICodeRedDatabaseSettings settings, IMongoRepo<InventoryModel,InventoryModel> image)
@@ -28,6 +31,7 @@ namespace cr_app_webapi.Services
             _assignmentOfBenefits = _database.GetCollection<AssignmentOfBenefits>("reports");
             _contextAccessor = new HttpContextAccessor();
             _bsonCol = _database.GetCollection<BsonDocument>("reports");
+            _imagesBson = _database.GetCollection<InventoryImage>("inventory.images");
             _image = image;
         }
 
@@ -48,8 +52,9 @@ namespace cr_app_webapi.Services
         public async Task<Object?> GetReport(string id, string reportType)
         {
             var reportCollection = _database.GetCollection<Report>("reports");
-            var projectionBuilder = Builders<Report>.Projection.Exclude(doc => doc.Id);
+            var projectionBuilder = Builders<Report>.Projection.Exclude(doc => doc.createdAt);
             var report = await reportCollection.Find(r => r.JobId == id && r.ReportType == reportType).As<Object>().FirstOrDefaultAsync();
+            
             return report;
         }
 
@@ -91,44 +96,6 @@ namespace cr_app_webapi.Services
             }
         }
 
-        // This is used for the logs reports
-        public async Task UpdateReport(string reportJson, string reportType, string jobId)
-        {
-            var time = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
-            /* BsonDocument doc = new BsonDocument();
-            using (var reader = new JsonReader(reportJson))
-            {
-                var context = BsonDeserializationContext.CreateRoot(reader);
-                doc = BsonDocumentSerializer.Instance.Deserialize(context);
-            } */
-            BsonDocument doc = BsonDocument.Parse(reportJson);
-            var filter = Builders<BsonDocument>.Filter.Eq("JobId", jobId) &
-                Builders<BsonDocument>.Filter.Eq("ReportType", reportType);
-            var updateOptions = new UpdateOptions { IsUpsert = true };
-            var updateDef = new List<UpdateDefinition<BsonDocument>>();
-            var existingReport = await _bsonCol.Find(filter).FirstOrDefaultAsync();
-            if (existingReport is null)
-            {
-                updateDef.Add(Builders<BsonDocument>.Update.Set("createdAt", time));
-            }
-            foreach (BsonElement field in doc.Elements)
-            {
-                updateDef.Add(Builders<BsonDocument>.Update.Set(field.Name, field.Value));
-            }
-            updateDef.Add(Builders<BsonDocument>.Update.Set("updatedAt", time));
-            var update = Builders<BsonDocument>.Update.Combine(updateDef);
-
-            await _bsonCol.UpdateOneAsync(filter, update, updateOptions);
-            /* switch (reportType)
-            {
-                case "quantity-inventory-logs":
-                case "atmospheric-readings":
-                    var filter = Builders<CaseFile>.Filter.Eq(doc => doc.JobId, jobId) & Builders<CaseFile>.Filter.Eq(doc => doc.ReportType, reportType);
-                    var update = Builders<CaseFile>.Update.Set(doc => doc.updatedAt, time);
-                    await _caseFile.UpdateOneAsync(doc => doc.JobId == jobId && doc.ReportType == reportType, update);
-                    break;
-            } */
-        }
         private async Task HandleError(IHttpContextAccessor context, string message)
         {
             var httpContext = context.HttpContext;
@@ -136,25 +103,9 @@ namespace cr_app_webapi.Services
             await httpContext.Response.WriteAsJsonAsync("Error: " + message);
         }
     }
-    public static class MongoExtensions
+    public static class ValidExtensions
     {
-        public static UpdateDefinition<T> ApplyMultiFields<T>(this UpdateDefinitionBuilder<T> builder, T obj)
-        {
-            var properties = obj.GetType().GetProperties();
-            UpdateDefinition<T> definition = null;
-
-            foreach (var property in properties)
-            {
-                if (definition == null)
-                {
-                    definition = builder.Set(property.Name, property.GetValue(obj));
-                }
-                else
-                {
-                    definition = definition.Set(property.Name, property.GetValue(obj));
-                }
-            }
-            return definition;
-        }
+        public static bool IsValid<T>([NotNullWhen(true)]T? doc) =>
+            doc is not null;
     }
 }

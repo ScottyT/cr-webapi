@@ -4,7 +4,7 @@ using MongoDB.Bson.Serialization.Attributes;
 namespace cr_app_webapi;
 public interface IDocument
 {
-    string Id { get; set; }
+    string? Id { get; set; }
     DateTime createdAt { get; set; }
     DateTime updatedAt {get; set;}
 }

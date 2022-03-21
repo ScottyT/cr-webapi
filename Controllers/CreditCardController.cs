@@ -51,10 +51,11 @@ namespace cr_app_webapi.Controllers
             string? cardnumber = newCard.cardNumber;
             if (cardnumber is null) return BadRequest();
             var card = GetByCardNumber(cardnumber);
-            if (card is not null)
+            if (card.Value is not null)
             {
                 return Ok(new {error = true, message = "Duplicate card numbers are not allowed."});
             }
+            
             await _creditCard.InsertOneAsync(newCard);
             return CreatedAtAction(nameof(Get), "Successfully created the credit card!");
         }

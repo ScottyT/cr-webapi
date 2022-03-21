@@ -68,7 +68,6 @@ builder.Services.AddControllers()
         {
             options.JsonSerializerOptions.PropertyNamingPolicy = null;
             options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
-            //options.JsonSerializerOptions.Converters.Add(new DictionaryStringObjectJsonConverter());
         }
     );
 builder.Services.AddHttpContextAccessor();

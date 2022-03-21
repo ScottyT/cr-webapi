@@ -26,12 +26,5 @@ public class CaseFile : Report
     public Boolean verifySign {get; set;} 
     public string? numberOfDehus {get; set;}
     public string? waterGallons {get; set;} 
-    public string? waterPounds {get; set;} 
-
-    public static implicit operator CaseFile(UpdateResult v)
-    {
-        CaseFile caseFile = new CaseFile();
-        caseFile = JsonSerializer.Deserialize<CaseFile>(v.ToJson());
-        return caseFile;
-    }
+    public string? waterPounds {get; set;}
 }

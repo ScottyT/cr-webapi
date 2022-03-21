@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Text.Json;
 using cr_app_webapi.Models;
 using MongoDB.Bson;
@@ -10,12 +11,14 @@ namespace cr_app_webapi.Services
     {
         private readonly IMongoCollection<TDocument> _collection;
         private readonly IMongoCollection<TForeign> _foreignCollection;
+        private readonly IMongoCollection<BsonDocument> _bsonCol;
 
         public MongoRepo(ICodeRedDatabaseSettings settings)
         {
             var database = new MongoClient(settings.ConnectionString).GetDatabase(settings.DatabaseName);
             _collection = database.GetCollection<TDocument>(GetCollectionName(typeof(TDocument)));
             _foreignCollection = database.GetCollection<TForeign>(GetCollectionName(typeof(TForeign)));
+            _bsonCol = database.GetCollection<BsonDocument>(GetCollectionName(typeof(TDocument)));
         }
 
         private protected string GetCollectionName(Type documentType)
@@ -59,31 +62,86 @@ namespace cr_app_webapi.Services
             });
         }
 
+        public async Task BsonFindOneAndUpdate(string jobid, string reportType, string json, bool upsert)
+        {
+            var time = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
+            BsonDocument doc = BsonDocument.Parse(json);
+            var filter = Builders<BsonDocument>.Filter.Eq("JobId", jobid) & Builders<BsonDocument>.Filter.Eq("ReportType", reportType);
+            var updateOptions = new FindOneAndUpdateOptions<BsonDocument> { IsUpsert = upsert };
+            var updateDef = new List<UpdateDefinition<BsonDocument>>();
+            var existingReport = await _bsonCol.Find(filter).FirstOrDefaultAsync();
+            if (existingReport is null)
+            {
+                updateDef.Add(Builders<BsonDocument>.Update.Set("createdAt", time));
+            }
+            foreach (BsonElement field in doc.Elements)
+            {
+                updateDef.Add(Builders<BsonDocument>.Update.Set(field.Name, field.Value));
+            }
+            updateDef.Add(Builders<BsonDocument>.Update.Set("updatedAt", time));
+            var update = Builders<BsonDocument>.Update.Combine(updateDef);
+            await _bsonCol.FindOneAndUpdateAsync(filter, update, updateOptions);
+        }
+
         public virtual Task SaveOneAsync(string json)
         {
             var time = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
             TDocument? doc = JsonSerializer.Deserialize<TDocument>(json);
+            if (!ValidExtensions.IsValid<TDocument>(doc))
+            {
+                return Task.Run(() => "There is an error with the data.");
+            }
             doc.updatedAt = time;
             doc.createdAt = time;
             return Task.Run(() =>  _collection.InsertOneAsync(doc));
         }
 
-        /* public virtual Task UpdateOneAsync(string id)
-        {
-            var filters = Builders<TDocument>.Filter.Eq(doc => doc.Id, id);
-            var update = Builders<TDocument>.Update.
-            return Task.Run(() => _collection.FindOneAndUpdateAsync(filters, updateExpression));
-        } */
-
-        public async Task FindOneAndUpdate<TProjected>(FilterDefinition<TDocument> filter, UpdateDefinition<TDocument> update, 
-            FindOneAndUpdateOptions<TDocument, TProjected> updateOptions)
-        {
-            await _collection.FindOneAndUpdateAsync(filter, update, updateOptions);
-        }
-        
         public virtual Task InsertOneAsync(TDocument document)
         {
             return Task.Run(() => _collection.InsertOneAsync(document));
+        }
+
+        public virtual Task GenericFindOneUpdate<TProjected>(Expression<Func<TDocument, bool>> filter, TDocument document, bool upsert = false, bool project = false)
+        {
+            var time = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
+            var existingReport = _collection.Find(filter).FirstOrDefault();
+            var updateDefList = new List<UpdateDefinition<TDocument>>();
+            if (existingReport is null)
+            {
+                updateDefList.Add(Builders<TDocument>.Update.Set("createdAt", time));
+            }
+            else
+            {
+                document.Id = existingReport.Id;
+            }
+            foreach(PropertyInfo field in document.GetType().GetProperties())
+            {
+                updateDefList.Add(Builders<TDocument>.Update.Set(field.Name, field.GetValue(document, null)));
+            }
+            updateDefList.Add(Builders<TDocument>.Update.Set("updatedAt", time));
+            var updateOptions = new FindOneAndUpdateOptions<TDocument, TProjected> { IsUpsert = upsert };
+            var update = Builders<TDocument>.Update.Combine(updateDefList);
+            return Task.Run(() => _collection.FindOneAndUpdateAsync<TProjected>(filter, update, updateOptions));
+        }
+
+        public void DeleteById(string id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task DeleteByIdAsync(string id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void DeleteMany(Expression<Func<TDocument, bool>> filterExpression)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task DeleteManyAsync(Expression<Func<TDocument, bool>> filterExpression)
+        {
+            throw new NotImplementedException();
         }
     }
 }

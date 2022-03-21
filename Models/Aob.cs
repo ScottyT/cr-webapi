@@ -49,7 +49,7 @@ public class AssignmentOfBenefits : Report
     public IEnumerable<CreditCard> creditCard {get; set;} = default!;
 }
 
-// THIS IS USED ONLY FOR AOB REPORTS! DON'T USE IT FOR OTHER REPORTS!!
+// THIS IS USED ONLY FOR AOB REPORTS and Logging reports and Moisture reports! DON'T USE IT FOR OTHER REPORTS!!
 public class Location
 {
     public string? address { get; set; }

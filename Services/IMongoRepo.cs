@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace cr_app_webapi.Services;
@@ -19,10 +20,19 @@ public interface IMongoRepo<TDocument, TForeign> where TDocument : IDocument, ne
     Task<TDocument> GetOneAsync(string id);
     //Task<TDocument> GetManyAsync(IEnumerable<string> ids);
     Task SaveOneAsync(string json);
-    //Task UpdateOneAsync(string id);
+    Task BsonFindOneAndUpdate(string jobid, string reportType, string json, bool upsert);
     Task InsertOneAsync(TDocument document); // This method is just like SaveOneAsync except in takes a generic as a parameter
-    Task FindOneAndUpdate<TProjected>(
-        FilterDefinition<TDocument> filter,
-        UpdateDefinition<TDocument> update,
-        FindOneAndUpdateOptions<TDocument, TProjected> updateOptions);
+
+    Task GenericFindOneUpdate<TProjected>(
+        Expression<Func<TDocument, bool>> filter,
+        TDocument document,
+        bool upsert = false, bool project = false
+    );
+    void DeleteById(string id);
+
+    Task DeleteByIdAsync(string id);
+
+    void DeleteMany(Expression<Func<TDocument, bool>> filterExpression);
+
+    Task DeleteManyAsync(Expression<Func<TDocument, bool>> filterExpression);
 }
