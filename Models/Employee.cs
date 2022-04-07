@@ -3,30 +3,69 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace cr_app_webapi.Models;
 [BsonIgnoreExtraElements]
-    public class Employee
+[BsonCollection("employees")]
+public class Employee : Document
+{
+    public Employee()
     {
-        [BsonId]
-        [BsonRepresentation(BsonType.ObjectId)]
-        public string? _id {get; set;}
-        public string fname {get; set;} = null!;
-        public string lname {get; set;} = null!;
-        public string email {get; set;} = null!;
-        public string id {get; set;} = null!;
-        public string role {get; set;} = null!;
-        public DateTime createdAt {get; set;}
-        public DateTime updatedAt {get; set;}
-        // Might change certifications to be defined as Certification type
-        public List<string> certifications_id {get; set;} = new List<string>();
-        public List<Object> UserReports {get; set;} = new List<Object>();
+        createdAt = DateTime.Now;
+        updatedAt = DateTime.Now;
     }
+    public string? fname { get; set; }
+    public string? lname { get; set; }
+    public string? email { get; set; }
+    public string? name { get; set; }
+    [BsonElement("id")]
+    public string? team_id { get; set; }
+    public string? username { get; set; }
+    public string? role { get; set; }
+    // Might change certifications to be defined as Certification type
+    //public List<string>? certifications_id { get; init; }
+    public string? picture { get; set; }
+    public string? auth_id {get; set;}
 
-    public class Certification
-    {
-        [BsonId]
-        [BsonRepresentation(BsonType.ObjectId)]
-        public string? _id {get; set;}
-        public string? idNumber {get; set;}
-        public string? description {get; set;}
-        public string? expiration {get; set;}
-        public Object? badge {get; set;}
-    }
+    // public List<Object> UserReports {get; set;} = new List<Object>();
+}
+
+public record struct FullName(string FirstName, string LastName)
+{
+    public string Name => FirstName + " " + LastName;
+}
+[BsonIgnoreExtraElements]
+public class AuthUser
+{
+    //public Employee employee {get; set;} = new Employee();
+    public string? connection { get; set; }
+    public string? email { get; set; }
+    public string? password { get; set; }
+    public string? username { get; set; }
+    public string? name { get; set; }
+    public UserMetadata? user_metadata { get; set; }
+}
+public class UserMetadata
+{
+    public List<string> certifications { get; set; } = new List<string>();
+    public string? role { get; set; }
+    public string? id { get; set; }
+}
+public class UserRoleView
+{
+    public string? user_id { get; set; }
+    public UserMetadata? user_metadata { get; set; }
+}
+public class UserObj
+{
+    public string fname { get; set; } = default!;
+    public string lname { get; set;} = default!;
+    public string? email { get; set;}
+    [BsonElement("id")]
+    public string? team_id { get; set;}
+    public string? role { get; set;}
+    public string? picture { get; init; }
+    public string? username { get; set;}
+    public string? password { get; set;}
+}
+public class Roles
+{
+    public string[] roles {get; set;} = new string[]{};
+}

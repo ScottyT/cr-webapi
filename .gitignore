@@ -12,10 +12,11 @@
 
 appsettings.json
 appsettings.Development.json
-code-red.json
-
+Uploads
+# *.xml
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
+.github/workflows
 
 # Mono auto generated files
 mono_crash.*

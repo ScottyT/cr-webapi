@@ -1,26 +1,36 @@
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace cr_app_webapi.Models;
 [BsonIgnoreExtraElements]
-public class CreditCard
+[BsonCollection("credit-cards")]
+public class CreditCard : Document
 {
-    [BsonId]
-    [BsonRepresentation(BsonType.ObjectId)]
-    public string? _id {get; set;}
+    public CreditCard()
+    {
+        createdAt = DateTime.Now;
+        updatedAt = DateTime.Now;
+    }
     public string? ReportType {get; set;}
-    public Object? cardholderInfo {get; set;}
-    public Object? billingAddressFirst {get; set;}
-    public Object? billingAddressOther {get; set;}
+
+    [JsonConverter(typeof(DictionaryStringObjectJsonConverter))]
+    public Dictionary<string, object>? cardholderInfo {get; set;}
+
+    [JsonConverter(typeof(DictionaryStringObjectJsonConverter))]
+    public Dictionary<string, object>? billingAddressFirst {get; set;}
+
+    [JsonConverter(typeof(DictionaryStringObjectJsonConverter))]
+    public Dictionary<string, object>? billingAddressOther {get; set;}
     public string? creditCardCompany {get; set;}
     public string? cardholderName {get; set;}
     public string? expirationDate {get; set;}
     public string? cvvNum {get; set;}
     public string? cardholderZip {get; set;}
-    public string? cardNumber {get; set;}
+
+   // [ForeignKey("cardNumber")]
+    public string cardNumber {get; set;} = default!;
     public string? customerSig {get; set;}
     public string? customerSignDate {get; set;}
-    public string? teamMember {get; set;}
-    public DateTime createdAt {get; set;}
-    public DateTime updatedAt {get; set;}
 }

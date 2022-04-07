@@ -3,16 +3,9 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace cr_app_webapi.Models;
 
-public class ServiceAgreement
+public class ServiceAgreement : Report
 {
-    [BsonId]
-    [BsonRepresentation(BsonType.ObjectId)]
-    public string? Id {get; set;}
-    public string? JobId {get; set;}
-    public string? ReportType {get; set;}
-    public string? formType {get; set;}
     public string? contractingCompany {get; set;}
-    public Object? teamMember {get; set;}
     public string? jobName {get; set;}
     public Object? jobLocation {get; set;}
     public string? cityStateZip {get; set;}
@@ -32,6 +25,4 @@ public class ServiceAgreement
     public string? customerPrint {get; set;}
     public string? cusSign {get; set;}
     public string? signDate {get; set;}
-    public DateTime createdAt {get; set;}
-    public DateTime updatedAt {get; set;}
 }
