@@ -1,0 +1,1301 @@
+<template>
+  <div class="form-wrapper">
+    <!-- <h1 class="text-center">{{company}}</h1> -->
+    <h2 class="text-center">Assignment of Benefits & Mitigation Contract</h2>
+    <h3 class="text-center">This is not an agreement to repair/rebuild/restore any property</h3>
+    <h3 v-if="message !== ''">{{message}}</h3>
+    <ValidationObserver ref="form">
+     <h3 class="alert alert--error" v-for="(error, i) in errorMessage" :key="`server-errors-${i}`">{{error}}</h3>
+      <form ref="form" class="form" @submit.prevent="submitForm" v-if="!submitted">
+        <fieldset v-if="currentStep === 1">
+          <div class="form__form-group">
+            <ValidationProvider rules="required" name="Job ID" v-slot="{errors}" class="form__input-group form__input-group--normal">
+              <label for="selectJobId" class="form__label">Job ID</label>
+              <i class="form__select--icon icon--angle-down mdi" aria-label="icon"></i>
+              <select class="form__input" v-model="selectedJobId">
+                <option disabled value="">Please select a Job Id</option>
+                <option v-for="(item, i) in $store.state.reports.jobids" :key="`jobid-${i}`">{{item}}</option>
+              </select>
+              <span class="form__input--error">{{ errors[0] }}</span>
+            </ValidationProvider>
+          </div>
+          <div class="text-left">
+            <p>
+              This is not a contract to Repair/Rebuild/Restore any Property
+              {{company}} {{abbreviation !== '' ? '('+abbreviation+')' : ''}} is an independent janitorial contractor.
+              We are not affiliated, associated, endorsed by or in any way officially connected with any other company,
+              agency or franchise.
+            </p>
+            <p>
+              This Assignment of Claim Agreement (hereinafter referred to as “Assignment” and/or “Agreement”) and
+              Mitigation
+              Contract (hereinafter referred to as “Contract”) is entered into by and between:
+            </p>
+            <p>
+              {{company}} (hereinafter referred to as “{{abbreviation}}” and/or “Insured”)
+              and The Owner/Persons of legal authority (hereinafter referred to as “Property Representative”)
+              of the property more commonly known as and identified by the following address:
+            </p>
+            <div class="form__form-group">
+              <ValidationProvider rules="required" class="form__input-group form__input-group--long" v-slot="{ errors }" name="Subject property">
+                <input type="text" class="form__input" v-model="subjectProperty" />           
+                <span class="txt--subtext mt-2">(hereinafter referred to as “Subject Property”)</span>
+                <span class="form__input--error">{{ errors[0] }}</span>
+              </ValidationProvider>
+              <UiGeoCoder @sendAddress="settingSubjectProperty($event)" mapid="map" geocoderid="subjectProperty" geocoderef="geocoderProperty" mapView />
+            </div>
+          </div>
+          <ol class="form__form-group--listing-num">
+            <li>
+              <span class="font-weight-bold">Assignment of Claim to {{company}}:</span>
+              <div class="form__form-group">
+                <LazyUiSignaturePadModal v-model="cusInitial1" :sigData="initialData" sigRef="initial1Pad" inputId="initial1" name="Initial" width="200px" height="70px" 
+                  :dialog="false" initial sigType="customer" />
+              </div>
+              <ol>
+                <li>
+                  Property Representative understands and agrees to assign all insurance rights, benefits, proceeds
+                  and any causes of action under applicable insurance policies to {{abbreviation}} for services rendered
+                  or to
+                  be rendered for said Subject Property identified above. Both parties understand and agree that
+                  {{abbreviation}} will replace the Property Representative as the Insured on the applicable insurance
+                  policies
+                  and as such will be entitled to all insurance rights, benefits, proceeds and any causes of action
+                  thereunder in its capacity as the legally recognized Insured.
+                </li>
+                <li>
+                  By executing this document Property Representative agrees and intends for all rights, benefits, and
+                  proceeds for services for said Subject Property identified above to be assigned solely and
+                  exclusively to {{abbreviation}} in its capacity as the Insured.
+                </li>
+                <li>
+                  In this regard, Property Representative waives all privacy rights if any related to all insurance
+                  information and agrees to provide any and all such reasonable and necessary information and
+                  documents to {{abbreviation}} to assist {{abbreviation}} in receiving payment for all services performed
+                  pursuant to
+                  this Agreement including but not limited to insurance policies, insurance policy numbers,
+                  endorsements, riders, correspondence, invoices, proof of coverage, full disclosure of any previous
+                  insurance claims if any and/or any other insurance policy information that {{abbreviation}} may need to
+                  establish, pursue and perfect its rights as the Insured and so as to exercise its rights thereunder to
+                  any benefits, proceeds, payments, causes of actions and/or any other related rights. Section III. of
+                  this Agreement is hereby incorporated by reference.
+                </li>
+                <li>
+                  The Property Representative makes this Assignment in consideration of and for {{abbreviation}}’s
+                  agreement to perform labor, provide services, supply materials and perform such services under
+                  this Contract and including the additional consideration of and for {{abbreviation}}’s not requiring
+                  full
+                  payment at the time of service.
+                </li>
+                <li>
+                  Property Representative hereby unequivocally directs the insurance carrier(s) to release all
+                  information requested by {{abbreviation}} in its capacity as the Insured, its representatives, and/or
+                  its
+                  attorney for the purpose of obtaining actual benefits to be paid by the insurance carrier(s) for
+                  services rendered or to be rendered for the Subject Property identified above.
+                </li>
+              </ol>
+            </li>
+            <div class="form__form-group form__form-group--row">
+                <LazyUiSignaturePadModal width="700px" height="219px" dialog :initial="false" sigType="customer" inputId="cusSignature" :sigData="cusSign"
+                    sigRef="customerSig" name="Signature" />
+                <div class="form__input-group form__input-group--normal">
+                    <label for="cusSignDate" class="form__label">Date:</label>
+                    <v-dialog ref="dialogCusSign" v-model="cusSignDateModal" :return-value.sync="cusSignDate" persistent width="400px">
+                        <template v-slot:activator="{ on, attrs }">
+                          <input id="cusSignDate" v-model="cusSignDateFormatted" v-bind="attrs"
+                                class="form__input form__input--short" readonly v-on="on" @blur="repDate = parseDate(cusSignDateFormatted)" />
+                        </template>
+                        <v-date-picker v-model="cusSignDate" scrollable>
+                          <v-spacer></v-spacer>
+                          <v-btn text color="#fff" @click="cusSignDateModal = false">Cancel</v-btn>
+                          <v-btn text color="#fff" @click="$refs.dialogCusSign.save(cusSignDate)">OK</v-btn>
+                        </v-date-picker>
+                      </v-dialog>
+                </div>
+            </div>
+            <li>
+              <span class="font-weight-bold">Direction of Payment to {{company}}:</span>
+              <ol>
+                <li>
+                  I hereby authorize and unequivocally instruct direct payment of any benefits or proceeds
+                  for services rendered by {{abbreviation}} to be made payable solely to {{abbreviation}} and sent
+                  exclusively
+                  to {{abbreviation}}.
+                </li>
+                <li>
+                  Property Representative understands and agrees that any portion of work, deductible(s),
+                  betterment, depreciation, or additional work requested by the Property Representative or
+                  otherwise not covered by insurance is ultimately the Property Representative’s
+                  responsibility and/or liability.
+                </li>
+              </ol>
+              <div class="form__form-group">
+                <LazyUiSignaturePadModal v-model="cusInitial2" :sigData="initialData" sigRef="initial2Pad" inputId="initial2" name="Initial" width="200px" height="70px" 
+                  :dialog="false" initial sigType="customer" />
+              </div>
+            </li>
+            <li>
+              <span class="font-weight-bold">Property Representative Cooperation Required:</span>
+              <ol>
+                <li>
+                  To the extent reasonable and possible, the Property Representative will provide {{abbreviation}} with
+                  all
+                  reasonable and necessary documents covering the Subject Property and/or take any and all
+                  reasonable steps to obtain if said documents are not currently in the possession of or otherwise
+                  available to the Property Representative including but not limited to copies of all insurance policies,
+                  endorsements, riders, correspondence, invoices and proof of coverage which may assist {{abbreviation}}
+                  in
+                  receiving payment for services performed.
+                </li>
+              </ol>
+              <div class="form__form-group">
+                <LazyUiSignaturePadModal v-model="cusInitial3" :sigData="initialData" sigRef="initial3Pad" inputId="initial3" name="Initial" width="200px" height="70px" 
+                  :dialog="false" initial sigType="customer" />
+              </div>
+            </li>
+            <li>
+              <span class="font-weight-bold">{{abbreviation}} is contracted to performing the below mitigation services
+                from start to finish.</span>
+              <ol>
+                <li>
+                  EVALUATION SERVICES: evaluate damages, scope, account, benefit and to obtain the Available
+                  Proceeds (as defined below in Section VI. d.)
+                </li>
+                <li>
+                  INSPECTION SERVICES: enter and inspect all aspects of the property including but not limited to
+                  construction, materials, design, code compliance, debris removal, hazardous material, contents on
+                  the premises, the potential of multiple claims, extent of damages and circumstances related to
+                  damages
+                </li>
+                <li>
+                  STRUCTURAL DRYING SERVICES: emergency stabilization, water extraction, demolition,
+                  debris removal, structural drying, atmospheric remediation, anti-microbial/odor/bio-treatments,
+                  building enveloping, dry material removal, monitoring, related sealants and any and all other
+                  services that may help contain and mitigate further damages (“Mitigation”)
+                </li>
+                <li>
+                  CONTENT SERVICES: content manipulation, content inventory, brick & stacking of content,
+                  boxing & packing of content, loading and transport of content, off-site storage of content and all
+                  other services related to handling, storing, and mitigating content damages
+                </li>
+                <li>
+                  PROFESSIONAL SERVICES: consult, contract independent experts, schedule and hold
+                  appointments with all other service providers and professionals as {{abbreviation}} deems necessary and
+                  reasonable to provide restoration and mitigation services
+                </li>
+                <li>
+                  ABILITY TO SUB-CONTRACT FOR SERVICES: sub-contract and or hire all other service
+                  providers and professionals as {{abbreviation}} deems necessary and reasonable to perform any or all of
+                  the
+                  restoration and mitigation work or services hereunder of the work herein
+                </li>
+                <li>
+                  IMMEDIATE: Time is of the essence under this Agreement for restoration and mitigation services.
+                  As such the Property Representative understands and agrees that the actions and/or services
+                  authorized in paragraphs IV. a.- f. typically require {{abbreviation}} to perform the services without
+                  prior
+                  communication with or input from the insurance company and/or before the insurance company is
+                  notified about or contacted regarding the loss and/or property damage and/or before the insurance
+                  company has an opportunity to inspect the Subject Property, hold adjustments and/or before the
+                  insurance company is able to communicate with {{abbreviation}} and/or any other service providers
+                  regarding
+                  any authorization from the insurance company if applicable, the services to be performed, the
+                  amount of insurance coverages, limits, etc..
+                </li>
+              </ol>
+              <div class="form__form-group">
+                <LazyUiSignaturePadModal v-model="cusInitial4" :sigData="initialData" sigRef="initial4Pad" inputId="initial4" name="Initial" width="200px" height="70px" 
+                  :dialog="false" initial sigType="customer" />
+              </div>
+            </li>
+            <li>
+              <span class="font-weight-bold">{{abbreviation}} is contracted for its services including equipment rental
+                services as set forth herein:</span>
+              <ol>
+                <li>
+                  In consideration of the mutual covenants and promises in this Agreement, the receipt and sufficiency
+                  of which consideration is hereby acknowledged, {{abbreviation}} leases equipment to the Property
+                  Representative and the Property Representative leases the equipment from {{abbreviation}}.
+                </li>
+                <li>
+                  {{abbreviation}} and the Property Representative understand and authorize this Equipment Rental
+                  Agreement
+                  to commence immediately upon the execution of the Equipment Rental Agreement and the
+                  Equipment Rental Agreement will continue on a day-to-day basis including and until the day the
+                  equipment is removed by and only by {{abbreviation}} from the Subject Property. This period is herein
+                  referred to as the “Term”.
+                </li>
+                <li>
+                  The rent and damage deposit inclusive of sales tax will be equal to the most recent geographical
+                  Xactimate price available applying IICRC Methods and Protocols commencing immediately upon
+                  the date of execution of this Equipment Rental Agreement and will be paid at the time of execution
+                  of this Equipment Rental Agreement. This payment is herein referred to as the “Deposit”.
+                </li>
+                <li>
+                  The Property Representative agrees to pay {{abbreviation}} rent (herein referred to as “Rent”) for the
+                  use of
+                  the equipment. The rent inclusive of sales tax will be equal to the most recent geographical
+                  Xactimate price available applying IICRC Methods and Protocols and will commence immediately
+                  upon the date of execution of this Equipment Rental Agreement and will be paid on the agreed
+                  day(s) throughout the Term.
+                </li>
+                <li>
+                  The Property Representative will use the equipment in a good and careful manner and will comply
+                  with all the manufacturer’s requirements and recommendations respecting the equipment and with
+                  any applicable law, whether local, state, or federal.
+                </li>
+                <li>
+                  Unless the Property Representative obtains prior written consent of {{abbreviation}}, the Property
+                  Representative will not alter or change its power source, program, reset, modify, attach anything to
+                  the equipment or remove the equipment from its placement in/around/or from the Subject Property.
+                </li>
+                <li>
+                  If the equipment is not in good repair, appearance and condition when it is returned to
+                  {{abbreviation}}, {{abbreviation}}
+                  may make such repairs or may cause such repairs to be made as necessary to put the equipment in
+                  a state of good repair, appearance and condition. {{abbreviation}} will make the said repairs within a
+                  reasonable time of taking possession of the equipment and will give the Property Representative
+                  written notice of the invoices for the said repairs. Upon receipt of the invoices the Property
+                  Representative will immediately reimburse {{abbreviation}} for the actual expense of those repairs.
+                </li>
+                <li>
+                  The Property Representative may, but is not obligated to, enforce any warranty that {{abbreviation}} has
+                  against the supplier or manufacturer of the equipment. The Property Representative will enforce
+                  such warranty or indemnity in its own name and at its own expense.
+                </li>
+                <li>
+                  To the extent permitted by law, the Property Representative will be responsible for the risk of loss,
+                  theft, damage, or destruction to the equipment from any and every cause.
+                </li>
+                <li>
+                  If the equipment is lost or damaged the Property Representative will continue paying Rent, will
+                  provide {{abbreviation}} with prompt written notice of such loss or damage and will, if the equipment is
+                  repairable, put or cause the equipment to be put in a state of good repair, appearance and condition.
+                </li>
+                <li>
+                  In the event of a total loss of the equipment the Property Representative will provide {{abbreviation}}
+                  with
+                  prompt written notice of such loss and will pay to {{abbreviation}} all unpaid Rent for the Term plus
+                  casualty
+                  value of the equipment at which point ownership of the equipment passes to the Property
+                  Representative.
+                </li>
+                <li>
+                  The equipment is the property of {{abbreviation}} and will remain the property of {{abbreviation}}
+                  unless otherwise provided herein.
+                </li>
+                <li>
+                  The Property Representative will not encumber the equipment or allow the equipment to be encumbered or
+                  pledge the equipment as security in any manner.
+                </li>
+                <li>
+                  {{abbreviation}} warrants that the Property Representative has the right to lease the equipment
+                  according to the terms of this Equipment Rental Agreement.
+                </li>
+                <li>
+                  {{abbreviation}} warrants that as long as no event of default has occurred {{abbreviation}} will not
+                  disturb the Property
+                  Representative’s quiet and peaceful possession of the equipment or the Property Representative’s
+                  use of the equipment for the purpose for which the equipment was designed.
+                </li>
+                <li>
+                  No insurance coverage for the equipment is required under this Equipment Rental Agreement.
+                </li>
+                <li>
+                  The Property Representative will indemnify and reimburse {{abbreviation}} for damages and expenses
+                  incurred by {{abbreviation}} arising from or related to the Property Representative’s failure to pay any
+                  tax, fee
+                  or charge regardless of whether the Property Representative is contesting the validity of the same or
+                  not.
+                </li>
+                <li>
+                  If the Property Representative fails to pay any and all taxes, fees and charges mentioned in this
+                  Equipment Rental Agreement and {{abbreviation}}, on behalf of the Property Representative, pays the
+                  same,
+                  the Property Representative will reimburse {{abbreviation}} for the cost upon notification from
+                  {{abbreviation}} of the
+                  amount.
+                </li>
+                <li>
+                  The Property Representative will indemnify and hold harmless {{abbreviation}} against any and all
+                  claims,
+                  actions, suits, proceedings, costs, expenses, damages and liabilities, including attorney’s fees and
+                  costs, arising out of or related to the Property Representative’s and/or {{abbreviation}}’s use of the
+                  equipment.
+                </li>
+              </ol>
+              <div class="form__form-group">
+                <LazyUiSignaturePadModal v-model="cusInitial5" :sigData="initialData" sigRef="initial5Pad" inputId="initial5" name="Initial" width="200px" height="70px" 
+                  :dialog="false" initial sigType="customer" />
+              </div>
+            </li>
+            <li>
+              <span class="font-weight-bold">Terms and Conditions:</span>
+              <ol>
+                <li>
+                  AUTHORITIES OF PARTIES:
+                  Property Representative is the owner of or the duly authorized agent of the owner with
+                  authority to bind the owner of the Subject Property for this Agreement. Property
+                  Representative covenants that {{abbreviation}} can rely on this authority and this appointment in all
+                  dealings with the insurance company, insurance agents, insurance adjusters, tenants and
+                  invitees of the Property Representative and the Subject Property and contractors and
+                  vendors of {{abbreviation}}.
+                </li>
+                <li>
+                  CERTIFICATE OF COMPLETION:
+                  Property Representative agrees to sign the {{abbreviation}} Certificate of Completion upon the
+                  conclusion of the {{abbreviation}} quality control evaluation.
+                </li>
+                <li>
+                  DIRECTION:
+                  Property Representative will advise the insurance company (and each agent, adjuster,
+                  independent adjuster, building consultant, expert, engineer or any other party acting on
+                  behalf thereof) of this Agreement, and will formally direct the insurance company to the
+                  proper party if contacted regarding actions and/or services authorized in this Agreement.
+                </li>
+                <li>
+                  <p>GOOD FAITH:
+                    It is the responsibility of the Property Representative to act in “good faith”. To the extent
+                    that any of the Property Representative’s actions or behaviors are deemed inappropriate
+                    {{abbreviation}} reserves its right to the Available Proceeds as defined herein in addition to the
+                    assignment of the Property Representative’s insurance claim; said assignment already
+                    being provided for herein in this Assignment. Property Representative agrees that Code
+                    Red Analytics Incorporated retains the right to document, scope and independently account
+                    on its own and/or alongside the insurance company concerning the replacement cost and/or
+                    actual cost value of the work, replacements and/or losses and damages and/or services to
+                    the Subject Property.</p>
+                  <p>As used herein “Available Proceeds” is defined as the maximum potential amount of
+                    funds Code Red Analytics Incorporated (a third party claims management
+                    corporation/company) estimates to be the replacement cost value performing the
+                    American Standard IICRC (best practices) while applying the most recent geographical
+                    Xactimate 28 (fair market value) price available including: the deductible minus (-)
+                    interest and depreciation equal (=) the Available Proceeds. This amount can vary greatly
+                    depending on the skills and thoroughness of the adjustor, analyst and {{abbreviation}}. The goal is
+                    to make {{abbreviation}} whole.</p>
+                </li>
+                <li>
+                  FRAUD:
+                  In most statesthe Property Representative is legally required to pay its deductible. Property
+                  Representative understands that Available Proceeds as defined and calculated herein in this
+                  Agreement include the Representative’s deductible. Property Representative understands
+                  and acknowledges that it may be able to find another contractor less expensive than {{abbreviation}};
+                  however, for purposes of this Agreement any settlements must reflect {{abbreviation}}’s cost. Any
+                  use by the Property Representative of {{abbreviation}}’s accounting, estimates, monetary
+                  calculations, or the like for its own personal gain or for any and all types of secondary gain
+                  is a misrepresentation of the Property Representative’s true cost to the insurance company
+                  and may constitute fraud. The Property Representative understands that it is illegal to
+                  misrepresent information to an insurance company and that any misrepresentation may
+                  constitute fraudulent activity or other illegal activity. {{abbreviation}} reserves the right to notify all
+                  legal authorities of any misrepresentations, fraudulent activity and/or any other illegal
+                  activity and {{abbreviation}} reserves the right to pursue any and all legal action if necessary.
+                </li>
+                <li>
+                  NO GUARANTEE OF COVERAGE:
+                  {{abbreviation}} is not able to guarantee, warrant, assure, state or represent as to the sufficiency of
+                  the amount of the Property Representative’s insurance coverage and whether such
+                  insurance coverage is or will be sufficient to cover the amount due to {{abbreviation}} for all
+                  mitigation, services, repair, restoration and renovation work needed and/or performed. The
+                  amounts and types of coverage are determined under the contract that exists between the
+                  insurance company and the Property Representative. {{abbreviation}} has no control over this
+                  contract and therefore cannot guarantee that any loss or damage is covered by insurance or
+                  that the amount of coverage available will permit needed services. Property Representative
+                  understands and agrees that Property Representative is and will be responsible for payment
+                  of all services performed pursuant to this Agreement and which are not covered either
+                  partially or in full by the insurance coverage.
+                </li>
+                <li>
+                  LIABILITY:
+                  The Property Representative understands this Agreement is not to repair, renovate or
+                  rebuild any property. The Property Representative understands {{abbreviation}} is not responsible for
+                  and/or liable for prior conditions or damages resulting therefrom including but not limited
+                  to mold, asbestos, lead, pollutants, hazardous materials and structural damage before,
+                  during or after authorization of this Agreement and/or any conditions or damages caused
+                  either indirectly or directly by {{abbreviation}} and/or anyone else performing services for and/or on
+                  behalf of {{abbreviation}}.
+                </li>
+                <li>
+                  INDEMNIFICATION:
+                  The Property Representative will hold harmless and indemnify {{abbreviation}} and/or anyone else 
+                  performing services for and/or on behalf of {{abbreviation}} against any and all claims and actions 
+                  arising out of the performance of any services pursuant to this Agreement including, 
+                  without limitation, expenses, judgments, fines, settlements and other amounts actually and 
+                  reasonably incurred in connection with any liability, suit, action, loss, or damage arising
+                  out of or resulting therefrom. Under this Agreement indemnification will be unlimited as 
+                  to the amount. 
+                </li>
+                <li>
+                  <p>
+                    AGREED MONETARY MINIMUM AND AGREED MONETARY MAXIMUM:
+                    Property Representative understands and agrees that {{abbreviation}} is solely and exclusively
+                    entitled to a minimum of $7.00 per square foot or $7,000.00 whichever is greater for the
+                    services performed at the Subject Property.
+                  </p>
+                  <p>
+                    “Square Foot” is defined as the total affected square footage determined by {{abbreviation}}
+                    applying the IICRC “BEST PRACTICES” of protocols pertaining to damages,
+                    contamination, aerosolizing and believe of dry material on the Subject Property.
+                  </p>
+                </li>
+                <li>
+                  AGREED LIQUIDATED AND ASCERTAINED DAMAGES:
+                  If this Agreement is cancelled or breached by the Property Representative more than
+                  twenty-four (24) hours after the execution of this Agreement, then {{abbreviation}} is entitled to
+                  payment for the entire scope of its services. {{abbreviation}}’s services include company expertise,
+                  research, inventory, investigation, calculations, software, and other services necessary to
+                  obtain accurate estimates and provide all said services. The value of these services is not
+                  separately invoiced and is beyond simple estimation. The parties agree that the provision
+                  of these services entitles {{abbreviation}} to compensation of an amount not yet known but for
+                  simplicity and to resolve uncertainty the parties further agree to liquidated damages in the
+                  amount of $30.00 per square foot as defined above. Furthermore, the parties understand
+                  and agree that the amount paid pursuant to this paragraph of the Agreement are liquidated
+                  damages and that such payments do not constitute a penalty whatsoever. {{abbreviation}} agrees to
+                  accept such payments as a reasonable and just compensation for said cancellation or breach
+                  of the Agreement.
+                </li>
+                <li>
+                  CANCELLATION PERIOD:
+                  Both parties have the right to cancel this Agreement up to but no later than twenty-four
+                  (24) hours following its execution. This Agreement cannot be cancelled once work is
+                  commenced except by the written agreement of both parties.
+                </li>
+                <li>
+                  <p>
+                    INTEREST:
+                    If {{abbreviation}} is not paid by the Property Representative within three (3) days of receipt of the
+                    Available Proceeds Property Representative agrees that all unpaid amounts will bear
+                    interest. Entitlement to the interest will commence three (3) days following Property
+                    Representative’s receipt of the Available Proceeds from the insurance company. Interest
+                    charges of 1.5% monthly are charged to all unpaid balances.
+                  </p>
+                  <p>
+                    ATTORNEY FEES
+                    {{abbreviation}} shall be entitled to reimbursement for costs of collection (including reasonable
+                    attorney’s fees and costs) of unpaid amounts by owner/Agent. {{abbreviation}} shall also be entitled
+                    to reimbursement and for reasonable attorney’s fees and costs for the breach or
+                    enforcement of any terms of this entire Agreement.
+                  </p>
+                </li>
+                <li>
+                  PAYMENT:
+                  The Property Representative is responsible for payment of all services, fees, rentals,
+                  treatments, betterments, and service minimums provided regardless of insurance company
+                  coverage or non-coverage and regardless of whether the Available Proceeds are made
+                  payable to the Property Representative, to {{abbreviation}} and the Property Representative or to
+                  {{abbreviation}} and the bank holding a mortgage on the Subject Property. Property Representative
+                  agrees that to the extent possible the insurance company shall deliver the Available
+                  Proceeds to {{abbreviation}}. If the Available Proceeds are not delivered to {{abbreviation}}, Property
+                  Representative agrees to pay the payment to {{abbreviation}} within three (3) days of Property
+                  Representative’s receipt of the Available Proceeds. Property Representative will within
+                  three (3) days of receipt of the Available Proceeds endorse the Available Proceeds to {{abbreviation}}
+                  for payment and {{abbreviation}} will return any excess payments of the Available Proceeds, if
+                  applicable, to the Property Representative.
+                </li>
+              </ol>
+              <div class="form__form-group">
+                <LazyUiSignaturePadModal v-model="cusInitial6" :sigData="initialData" sigRef="initial6Pad" inputId="initial6" name="Initial" width="200px" height="70px" 
+                  :dialog="false" initial sigType="customer" />
+              </div>
+            </li>
+            <li>
+              <span class="font-weight-bold">Entire Agreement and Jurisdiction:</span>
+              <p>Except as set forth in this Agreement entered into by the parties, this Agreement is the entire
+                agreement between {{abbreviation}} and the Property Representative with respect to the subject matter
+                hereof and replaces any prior agreements between them whether verbal or written. Should any
+                provision of this Agreement be deemed invalid or unenforceable the parties request any court
+                making such a determination to revise the provision at issue so that it will be valid and
+                enforceable to the broadest extent possible and so that all the remaining provisions will remain
+                valid and in full force and effect. This Agreement can only be amended or changed in writing
+                signed by an officer of {{abbreviation}}. No waiver hereunder will be binding unless in writing signed by
+                the waiving party. Any representation, statements or other communications not written in this
+                Agreement are agreed to be immaterial and are not to be relied on by either party and are deemed
+                to not have survived the execution of this Agreement. This Agreement may not be assigned
+                except with the written permission of {{abbreviation}}.</p>
+              <div class="form__form-group">
+                <LazyUiSignaturePadModal v-model="cusInitial7" :sigData="initialData" sigRef="initial7Pad" inputId="initial7" name="Initial" width="200px" height="70px" 
+                  :dialog="false" initial sigType="customer" />
+              </div>
+            </li>
+          </ol>
+          <h3 class="font-weight-bold">RETAINER AND RESERVE PAYMENT RELATED TO THE ABOVE AGREEMENT</h3>
+          <ol>
+            <li>
+              <strong>Insured Property</strong><br />
+              The Subject Property is insured properly. The Property Representative agrees to pay $500.00 or
+              50% of the “Available Proceeds” deductible whichever is greater upon the authorization of this
+              Agreement. The Property Representative agrees to pay the remaining sum of the “Available
+              Proceeds” deductible in its entirety within five (5) days of the authorization of this Agreement
+              and/or when the last piece of equipment is picked up by {{abbreviation}} from the Subject Property
+              whichever comes first. This payment is to retain, and reserve said services and equipment herein
+              per this Agreement. This payment will be applied to the balance of the Available Proceeds as
+              defined above.
+            </li>
+            <li>
+              <strong>Pending Insurance</strong><br />
+              If insurance coverage is in question on the Subject Property by the Property Representative, then
+              the Property Representative agrees to pay a minimum of $750.00 if insurance coverage is secured
+              timely. The Property Representative agrees to pay the sum of the Available Proceeds’ deductible
+              in its entirety within five (5) days of the authorization of this Agreement and/or when the last
+              piece of equipment is picked up by {{abbreviation}} from the Subject Property whichever comes first. Once
+              insurance coverage is confirmed or denied the project will then proceed following the above
+              Insured Property provision as it relates to the amount of the retainer for a project for which there
+              is insurance coverage. If insurance coverage is not obtained or if it is denied the project will then
+              proceed following the below Non-Insured Property provision as it relates to the amount of the
+              retainer for a project for which there is not insurance coverage. This payment is to retain, and
+              reserve said services and equipment herein per this Agreement. This payment will be applied to
+              the balance of the Available Proceeds as defined above.
+            </li>
+            <li>
+              <strong>Non-Insured</strong><br />
+              If there is not any insurance coverage on the Subject Property, then Property Representative
+              agrees to pay a minimum of $750.00 upon the authorization of this Agreement. The Property
+              Representative agrees to pay a second sum of $750.00 for a total payment of $1,500.00 within
+              five (5) days of the authorization of this Agreement and/or when the last piece of equipment is
+              picked up by {{abbreviation}} from the Subject Property whichever comes first. This payment is to retain,
+              and reserve said services and equipment herein per this Agreement. This payment will be applied
+              to the balance of the Available Proceeds as defined above.
+            </li>
+            <div class="form__form-group">
+               <LazyUiSignaturePadModal v-model="cusInitial8" :sigData="initialData" sigRef="initial8Pad" inputId="initial8" name="Initial" width="200px" height="70px" 
+                  :dialog="false" initial sigType="customer" />
+            </div>
+          </ol>
+          <div class="form__form-group form__form-group--column">
+            <h3 class="font-weight-bold">INSURED RETAINER & RESERVE</h3>
+            <div class="form__input-wrapper form__form-group">
+              <span class="form__input-group--inline grid--one-column">
+                <div class="form__input-group--section">
+                  <label for="InsuredDeductible" class="form__label">Insured Deductible</label>
+                  <span class="form__input--currency"><span>$</span><input type="text" id="InsuredDeductible"
+                          class="form__input form__input--short" v-model="deductible" @keypress="currencyFormat" /></span>
+                </div>
+              </span>
+              <span class="form__input-group--inline grid--one-column">
+                <div class="form__input-group--section">
+                  <label for="InsuredEndDate" class="form__label">Insured: Agreed “Term” End Date</label>
+                  <div class="form__input-group--section">
+                    <v-dialog ref="dialogEndDate" v-model="insuredEndDateModal" :return-value.sync="insuredEndDate" persistent width="500px">
+                      <template v-slot:activator="{ on, attrs }">
+                        <input id="InsuredEndDate" v-model="insuredEndDateFormatted" v-bind="attrs" class="form__input form__input--short" v-on="on" readonly />
+                      </template>
+                      <v-date-picker v-model="insuredEndDate" scrollable>
+                        <v-spacer></v-spacer>
+                        <v-btn text color="#fff" @click="insuredEndDateFormatted = 'N/A'">Clear</v-btn>
+                        <v-btn text color="#fff" @click="insuredEndDateModal = false">Cancel</v-btn>
+                        <v-btn text color="#fff" @click="$refs.dialogEndDate.save(insuredEndDate)">OK</v-btn>
+                      </v-date-picker>
+                    </v-dialog>
+                  </div>
+                </div>
+              </span>
+              <span class="form__input-group--inline">
+                <div class="form__input-group--section">
+                  <label for="insuredPayment1" class="form__label">Insured Payment 1)</label>
+                  <span class="form__input--currency">
+                    <span>$</span><input type="text" class="form__input form__input--short" v-model="insuredPay1" />
+                  </span>
+                </div>
+                <div class="form__input-group--section">
+                  <label for="insuredDay1" class="form__label">Day (1) Date</label>
+                  <v-dialog ref="insuredPayDay1" v-model="insuredPayment.day1Modal" :return-value.sync="insuredPayment.day1Date" persistent width="500px">
+                    <template v-slot:activator="{ on, attrs }">
+                      <input id="insuredDay1" v-model="insuredPayment.day1DateFormatted" v-bind="attrs" readonly class="form__input form__input--short" v-on="on" 
+                           />
+                    </template>
+                    <v-date-picker v-model="insuredPayment.day1Date" scrollable>
+                      <v-spacer></v-spacer>
+                      <v-btn text color="#fff" @click="insuredPayment.day1DateFormatted = 'N/A'">Clear</v-btn>
+                      <v-btn text color="#fff" @click="insuredPayment.day1Modal = false">Cancel</v-btn>
+                      <v-btn text color="#fff" @click="$refs.insuredPayDay1.save(insuredPayment.day1Date)">OK</v-btn>
+                    </v-date-picker>
+                  </v-dialog>
+                </div>
+              </span>
+              <span class="form__input-group--inline">
+                <div class="form__input-group--section">
+                  <label for="insuredPayment2" class="form__label">Insured Payment 2)</label>
+                  <span class="form__input--currency">
+                    <span>$</span><input id="insuredPayment2" type="text" class="form__input form__input--short" v-model="insuredPay2" />
+                  </span>
+                </div>
+                <div class="form__input-group--section">
+                  <label for="insuredDay5" class="form__label">Day (5) Date</label>
+                  <v-dialog ref="insuredPayDay5" v-model="insuredPayment.day5Modal"
+                            :return-value.sync="insuredPayment.day5Date" persistent width="500px">
+                    <template v-slot:activator="{ on, attrs }">
+                      <input id="insuredDay5" v-model="insuredPayment.day5DateFormatted" v-bind="attrs" readonly
+                            class="form__input form__input--short" v-on="on" />
+                    </template>
+                    <v-date-picker v-model="insuredPayment.day5Date" scrollable>
+                      <v-spacer></v-spacer>
+                      <v-btn text color="#fff" @click="insuredPayment.day5DateFormatted = 'N/A'">Clear</v-btn>
+                      <v-btn text color="#fff" @click="insuredPayment.day5Modal = false">Cancel</v-btn>
+                      <v-btn text color="#fff" @click="$refs.insuredPayDay5.save(insuredPayment.day5Date)">OK</v-btn>
+                    </v-date-picker>
+                  </v-dialog>
+                </div>
+              </span>
+            </div>
+          </div>
+          <div class="form__form-group form__form-group--column">
+              <h3 class="font-weight-bold">NON-INSURED OR STILL PENDING COVERAGE RETAINER & RESERVE</h3>
+              <div class="form__form-group">
+                <span class="form__input-group--inline form__input-group--date-group">
+                  <label for="NonInsuredEndDate" class="form__label">Non-Insured or Still Pending Coverage: Agreed “Term” End Date</label>
+                  <UiDatePicker dateId="NonInsuredEndDate" dialogId="dialognoninsuredEndDate" @date="nonInsuredPayment.endDateFormatted = $event" />
+                </span>
+                <span class="form__input-group--inline form__input-group--date-group">
+                  <label for="NonInsuredDay1Date" class="form__label">Non-Insured or Still Pending Coverage: Payment 1) =
+                    $750.00 Day (1) Date</label>
+                  <UiDatePicker dateId="NonInsuredDay1Date" dialogId="nonInsuredDay1" @date="nonInsuredPayment.day1DateFormatted = $event" />
+                </span>
+                <span class="form__input-group--inline form__input-group--date-group">
+                  <label for="NonInsuredDay5Date" class="form__label">Non-Insured or Still Pending Coverage: Payment 2) =
+                    $750.00 Day (5) Date</label>
+                  <UiDatePicker dateId="NonInsuredDay5Date" dialogId="nonInsuredDay5" @date="nonInsuredPayment.day5DateFormatted = $event" />
+                </span>
+              </div>           
+          </div>
+          <div class="form__form-group">
+              <ValidationProvider rules="required" class="form__input-group form__input-group--long" v-slot="{errors}" name="Address">
+                <input type="hidden" v-model="location.address" />
+                <label for="address" class="form__label">Address</label>
+                <UiGeoCoder @sendAddress="settingLocation($event)" :mapView="false" geocoderid="geocoder" geocoderef="geocoder" />
+                <span class="form__input--error">{{ errors[0] }}</span>
+              </ValidationProvider>
+              <ValidationProvider rules="required" class="form__input-group form__input-group--long" v-slot="{errors}" name="State">
+                <label class="form__label">City, State, Zip</label>
+                <input v-model="location.cityStateZip" name="cityStateZip" type="text" class="form__input form__input--long" />
+                <span class="form__input--error">{{ errors[0] }}</span>
+              </ValidationProvider>
+              <ValidationProvider rules="required|alpha" v-slot="{errors}" name="First name" class="form__input-group form__input-group--normal">
+                <label for="firstname" class="form__label">First Name</label>
+                <input type="text" id="firstname" class="form__input" v-model="firstName" />
+                <span class="form__input--error">{{ errors[0] }}</span>
+              </ValidationProvider>
+              <ValidationProvider rules="required|alpha" v-slot="{errors}" name="Last name" class="form__input-group form__input-group--normal">
+                <label for="lastname" class="form__label">Last Name</label>
+                <input type="text" id="lastname" class="form__input" v-model="lastName" />
+                <span class="form__input--error">{{ errors[0] }}</span>
+              </ValidationProvider>
+              <ValidationProvider rules="required" v-slot="{errors}" name="Email" class="form__input-group form__input-group--normal">
+                <label for="email" class="form__label">Email Address</label>
+                <input type="text" id="email" class="form__input" v-model="email" />
+                <span class="form__input--error">{{ errors[0] }}</span>
+              </ValidationProvider>
+              <ValidationProvider name="License" :rules="`max:11|required`" v-slot="{errors}" class="form__input-group form__input-group--long">
+                <label for="driverslicense" class="form__label">Driver's License #</label>
+                <imask-input id="driverslicense" @complete="driversLicense = $event" class="form__input" :mask="licenseMask.mask" :prepare="licenseMask.prepare" :value="driversLicense" />
+                <span class="form__input--error">{{ errors[0] }}</span>
+              </ValidationProvider>
+              <div class="form__input-group form__input-group--normal">
+                <label for="relation" class="form__label">Relation</label>
+                <input id="relation" type="text" class="form__input" v-model="relation" />
+              </div>
+          </div>
+          <div class="form__form-group form__form-group--inline">
+              <ValidationProvider rules="required|numeric" name="Square foot" v-slot="{errors}">
+                  <label class="form__label">Minimum believed Square Foot as defined above</label>
+                  <input type="number" v-model="sqft" class="form__input" />
+                  <span class="form__input--error">{{ errors[0] }}</span>
+              </ValidationProvider>
+          </div>
+          <p>{{abbreviation}} is solely and exclusively entitled to a minimum of $7.00 per square foot or $7,000.00</p>
+          <p class="text-left">Property Representative understands {{company}} is not affiliated, associated, endorsed by, or in any way officially connected with any other company, agency or franchise.</p>
+          <div class="form__form-group">
+              <span class="form__input-group form__input-group--normal">
+                  <label class="form__label">Driver's License #</label>
+                  <input type="text" readonly v-model="driversLicense" class="form__input" />
+              </span>
+              <ValidationProvider rules="required|alpha_spaces" name="Name" v-slot="{errors}" class="form__input-group form__input-group--normal">
+                  <label for="repPrint" class="form__label">Property Representative Print</label>
+                  <input type="text" id="repPrint" class="form__input" v-model="repPrint" />
+                  <span class="form__input--error">{{ errors[0] }}</span>
+              </ValidationProvider>
+              <ValidationProvider class="form__input-group form__input-group--normal" name="Representative of" rules="required" v-slot="{errors}">
+                <label for="repOf" class="form__label">Property Representative of</label>
+                <input type="text" id="repOf" class="form__input" v-model="representativeOf" />
+                <span class="form__input--error">{{ errors[0] }}</span>
+              </ValidationProvider>
+              <div class="form__input-group form__input-group--normal form__input-group--date-group">
+                <label for="repOfDate" class="form__label">Date</label>
+                <UiDatePicker dateId="repOfDate" dialogId="dialogRepDate" @date="repDateFormatted = $event" />
+              </div>
+              <ValidationProvider rules="required" name="Witness" v-slot="{errors}" class="form__input-group form__input-group--long">
+                  <label for="witness" class="form__label">Witness</label>
+                  <textarea type="text" id="witness" class="form__input form__input--textarea" v-model="witness"></textarea>
+                  <span class="form__input--error">{{ errors[0] }}</span>
+              </ValidationProvider>
+              <ValidationProvider rules="required" name="Witness date" v-slot="{errors}" class="form__input-group form__input-group--normal form__input-group--date-group">
+                  <label for="witnesslabel" class="form__label">Witness date</label>
+                  <input type="hidden" v-model="witnessDate" />
+                  <UiDatePicker dateId="witnesslabel" dialogId="dialogWitnessDate" @date="witnessDateFormatted = $event" />
+                  <span class="form__input--error">{{ errors[0] }}</span>
+              </ValidationProvider>
+              <LazyUiSignaturePadModal width="700px" height="219px" dialog :initial="false" sigType="customer" inputId="repSignPad"  :sigData="repSign" 
+                sigRef="repSignPad" name="Representative signature" />
+          </div>
+          <div class="form__form-group form__form-group--inline form__form-group--column">
+              <ValidationProvider rules="numeric" name="Number of rooms" v-slot="{errors}" class="form__input-group form__input-group--short">
+                  <label for="numberOfRooms" class="form__label">Number of Rooms</label>
+                  <input id="numberOfRooms" type="text" class="form__input" v-model="numberOfRooms" />
+                  <span class="form__input--error">{{ errors[0] }}</span>
+              </ValidationProvider>
+              <ValidationProvider name="Number of floors" v-slot="{errors}" class="form__input-group form__input-group--short">
+                  <label for="numberOfFloors" class="form__label">Number of Floors</label>
+                  <input type="text" id="numberOfFloors" class="form__input" v-model="numberOfFloors" />
+                  <span class="form__input--error">{{ errors[0] }}</span>
+              </ValidationProvider>
+              <ValidationProvider name="Payment option" rules="required" v-slot="{errors}" class="form__input-group">
+                <p class="form__label">Which payment method will you use?</p>
+                <div class="form__form-group--inline">
+                  <span v-for="(item, i) in paymentOptions" :key="`payment-${i}`" class="form__input--radio">
+                    <label :for="item">{{item}}</label>
+                    <input :id="item" type="radio" v-model="paymentOption" :value="item" />
+                  </span>
+                </div><br />
+                <span class="form__input--error">{{ errors[0] }}</span>
+              </ValidationProvider>
+              <ValidationProvider v-if="paymentOption === 'Card'" name="Existing credit card" rules="required" v-slot="{errors}" class="form__input-group">
+                <p class="form__label">Are you using an existing credit/debit card?</p>
+                <div class="form__form-group--inline">
+                  <span class="form__input--radio">
+                    <label for="Yes">Yes</label>
+                    <input id="Yes" type="radio" v-model="existingCreditCard" value="Yes" />
+                  </span>
+                  <span class="form__input--radio">
+                    <label for="No">No</label>
+                    <input id="No" type="radio" v-model="existingCreditCard" value="No" />
+                  </span>
+                </div>
+                <span class="form__input--error">{{ errors[0] }}</span>
+              </ValidationProvider>
+              <ValidationProvider v-if="existingCreditCard === 'Yes' && paymentOption === 'Card'" name="Card to link" rules="required" v-slot="{errors}"
+                class="form__input-group form__input-group--normal">
+                <input type="hidden" v-model="cardToUse" />
+                <label class="form__label">Card number</label>
+                <i class="form__select--icon icon--angle-down mdi" aria-label="icon"></i>
+                <select class="form__input" v-model="cardToUse">
+                  <option disabled value="">Card Number</option>
+                  <option v-for="(item, i) in cardNumbers" :key="`cardnumbers-${i}`">{{item}}</option>
+                </select>
+                <span class="form__input--error">{{ errors[0] }}</span>
+              </ValidationProvider>
+          </div>
+        </fieldset>
+        <LazyFormsCreditCard v-if="currentStep >= 2 && paymentOption == 'Card'" ref="creditCardForm" company="Water Emergency Services Incorporated" abbreviation="WESI" :partOfLastSection="true" 
+          :jobId="selectedJobId" :repPrint="repPrint" @submit="submitForm" @cardSubmit="cardSubmittedValue" />
+        <v-btn type="submit" v-if="currentStep === 1 && (paymentOption == 'Card' && existingCreditCard == 'No')">Next</v-btn>
+        <v-btn :loading="submitting" type="submit" :class="cardSubmitted || (paymentOption !== 'Card' || existingCreditCard !== 'No') ? 'button' : 'button--disabled'">
+          {{ submitting ? 'Submitting' : 'Submit' }}
+        </v-btn>
+      </form>
+    </ValidationObserver>
+    <!-- <h3>{{message}} {{submitting ? "Email being sent out..." : emailSuccess}}</h3>
+    <div>
+    <client-only>
+      <vue-html2pdf :pdf-quality="2" pdf-content-width="100%" :html-to-pdf-options="htmlToPdfOptions"
+                    @beforeDownload="beforeDownload($event)" :manual-pagination="true" :show-layout="false"
+                    :enable-download="false" :preview-modal="true" :paginate-elements-by-height="10500"
+                    ref="aobhtml2pdf">
+        <PdfAobContract slot="pdf-content" :cardsInfo="cards" :images="cardImages" :contracts="data" company="Water Emergency Services Incorporated" abbreviation="WESI" />
+      </vue-html2pdf>
+    </client-only>
+    <button class="button--normal" ref="downloadBtn" v-show="false" @click="generatePdf()">Download PDF</button>
+    </div> -->
+  </div>
+</template>
+<script>
+import goTo from 'vuetify/es5/services/goto'
+import {mapGetters, mapActions} from 'vuex'
+import { statesArr } from "@/data/states"
+import { driversLicenseMask } from "@/data/masks";
+import axios from 'axios'
+  export default {
+    props: ['company', 'abbreviation'],
+    computed: {
+      ...mapGetters({getReports:'reports/getReports', getUser:'users/getUser', getCards: 'reports/getCards'}),
+      insuredPay1: {
+        get() {
+          let pay = this.deductible * .50
+          if (pay) {
+            return pay
+          } else {
+            return 500.00
+          }
+        },
+        set(value) {
+          this.insuredPayment.firstStep = value
+        }
+      },
+      insuredPay2: {
+        get() {
+          let pay = this.deductible * .50
+          if (pay) {
+            return pay
+          } else {
+            return 500
+          }
+        },
+        set(value) {
+          this.insuredPayment.insuredPay2 = value
+        }
+      },
+      insuredDay1() {
+        return this.insuredPayment.day1Date;
+      },
+      insuredDay5() {
+        return this.insuredPayment.day5Date
+      },
+      nonInsuredEndDate() {
+        return this.nonInsuredPayment.endDate;
+      },
+      nonInsuredDay1() {
+        return this.nonInsuredPayment.day1Date;
+       
+      },
+      nonInsuredDay5() {
+        return this.nonInsuredPayment.day5Date;
+        /* get() {
+          
+        },
+        set(value) {
+          if (typeof value === "string") {
+            return "N/A"
+          } else {
+            return this.nonInsuredPayment.day5Date;
+          }
+        } */
+      },
+      aobContracts() {
+        return this.getReports.filter((v) => {
+          return v.ReportType === "aob"
+        })
+      },
+      cardNumbers() {
+        return this.getCards.map((v) => {
+          return v.cardNumber
+        })
+      },
+      
+      htmlToPdfOptions(e) {
+        return {
+          margin: [10, 10, 20, 10],
+          filename: `aob-${this.selectedJobId}`,
+          image: {
+            type: "jpeg",
+            quality: 0.98
+          },
+          html2canvas: {
+            scale: 2,
+            useCORS: true
+          },
+          jsPDF: {
+            unit: 'px',
+            format: 'letter',
+            orientation: 'portrait',
+            hotfixes: ['px_scaling']
+          }
+        }
+      }
+    },
+    data: (vm) => ({
+      message: '',
+      errorMessage: null,
+      submitted: false,
+      submitting: false,
+      subjectProperty: '',
+      deductible: null,
+      cusSign: {
+          data: '',
+          isEmpty: true
+      },
+      cusSignDate: new Date().toISOString().substr(0, 10),
+      cusSignDateModal: false,
+      cusSignDateFormatted: vm.formatDate(new Date().toISOString().substr(0, 10)),
+      cusInitial1: '',
+      cusInitial2:'',
+      cusInitial3:'',
+      cusInitial4:'',
+      cusInitial5:'',
+      cusInitial6:'',
+      cusInitial7:'',
+      cusInitial8: '',
+      initialData: { data: '', isEmpty: true },
+      insuredEndDateModal: false,
+      insuredEndDate: new Date().toISOString().substr(0, 10),
+      insuredEndDateFormatted: vm.formatDate(new Date().toISOString().substr(0, 10)),
+        insuredPayment: {
+            day1Modal: false,
+            day5Modal: false,
+            firstStep: null,
+            insuredPay2: '',
+            day1Date: new Date().toISOString().substr(0, 10),
+            day1DateFormatted: vm.formatDate(new Date().toISOString().substr(0, 10)),
+            day5Date: new Date().toISOString().substr(0, 10),
+            day5DateFormatted: vm.formatDate(new Date().toISOString().substr(0, 10))
+        },
+        nonInsuredPayment: {
+            endDateModal: false,
+            day1Modal: false,
+            day5Modal: false,
+            endDate: new Date().toISOString().substr(0, 10),
+            endDateFormatted: vm.formatDate(new Date().toISOString().substr(0, 10)),
+            day1Date: new Date().toISOString().substr(0, 10),
+            day1DateFormatted: vm.formatDate(new Date().toISOString().substr(0, 10)),
+            day5Date: new Date().toISOString().substr(0, 10),
+            day5DateFormatted: vm.formatDate(new Date().toISOString().substr(0, 10)),
+        },
+        location: {
+            address: "",
+            city: "",
+            state: "",
+            zip: "",
+            cityStateZip: ''
+        },
+        firstName:'',
+        lastName:'',
+        email: '',
+        driversLicense: '',
+        relation:'',
+        sqft: '',
+        repSign: {
+            data: '',
+            isEmpty: true
+        },
+        representativeOf: '',
+        repPrint: '',
+        repDateModal: false,
+        repDate: new Date().toISOString().substr(0, 10),
+        repDateFormatted: vm.formatDate(new Date().toISOString().substr(0, 10)),
+        witness: '',
+        witnessDate: new Date().toISOString().substr(0, 10),
+        witnessDateModal:false,
+        witnessDateFormatted: vm.formatDate(new Date().toISOString().substr(0, 10)),
+        selectedJobId: "",
+        selectActive: false,
+        numberOfRooms: '',
+        numberOfFloors: '',
+        sketchData: {
+          data: '',
+          isEmpty: true
+        },
+        cardSubmitted: false,
+        currentStep: 1,
+        paymentOptions: ["Cash", "Card"],
+        paymentOption: "",
+        existingCreditCard: "",
+        cardToUse: "",
+        cardObj: {},
+        states: statesArr,
+        data: {},
+        cards: [],
+        cardImages: [],
+        emailSuccess: "",
+        licenseMask: driversLicenseMask
+    }),
+    watch: {
+        insuredEndDate(val) {
+          if (val === "N/A") {
+            this.insuredEndDateFormatted = "N/A"
+          } else {
+            this.insuredEndDateFormatted = this.formatDate(val)
+          }
+        },
+        insuredDay1(val) {
+          if (val === "N/A") {
+            this.insuredPayment.day1DateFormatted = "N/A"
+          } else {
+            this.insuredPayment.day1DateFormatted = this.formatDate(val)
+          }
+        },
+        insuredDay5(val) {
+          if (val === "N/A") {
+            this.insuredPayment.day5DateFormatted = "N/A"
+          } else {
+            this.insuredPayment.day5DateFormatted = this.formatDate(val)
+          }
+        },
+        repDate(val) {
+            this.repDateFormatted = this.formatDate(val)
+        },
+        witnessDate(val) {
+            this.witnessDateFormatted = this.formatDate(val)
+        },
+        cusSignDate(val) {
+            this.cusSignDateFormatted = this.formatDate(val)
+        },
+        selectedJobId(val) {
+          this.$api.$get(`/api/reports/details/dispatch/${val}`).then((res) => {
+            this.subjectProperty = res.location.address + ", " + res.location.cityStateZip
+            this.numberOfFloors = res.intrusion.find(e => e.label === 'Number of Floors').value
+            this.numberOfRooms = res.intrusion.find(e => e.label === 'Number of Rooms').value
+          }).catch(err => {
+            this.errorMessage = err
+          })
+        },
+        paymentOption(val) {
+          if (val === 'Cash') {
+            this.existingCreditCard = 'No'
+          } else {
+            this.existingCreditCard = 'Yes'
+          }
+        }
+    },
+    methods: {
+        onAccept(e) {
+          var maskRef = e
+          this.driversLicense = maskRef
+        },
+        settingSubjectProperty(params) {
+            this.subjectProperty = params.address
+        },
+        cardSubmittedValue(...params) {
+            const {isSubmit, cardNumber} = params[0]
+            this.cardObj = params
+            this.cardToUse = cardNumber
+            this.cardSubmitted = isSubmit
+        },
+        onBegin() {
+          const {
+            isEmpty
+          } = this.$refs.sketchPad.saveSignature();
+          this.sketchData.isEmpty = isEmpty
+        },
+        formatDate(dateReturned) {
+            if (dateReturned === 'N/A') return
+            if (!dateReturned) return null
+            const [year, month, day] = dateReturned.split('-')
+            return `${month}/${day}/${year}`
+        },
+        currencyFormat($event) {
+            let keyCode = ($event.keyCode ? $event.keyCode : $event.which);
+            // only allow number and one dot
+            if ((keyCode < 48 || keyCode > 57) && (keyCode !== 46 || this.deductible.indexOf('.') != -1)) { // 46 is dot
+                $event.preventDefault();
+            }
+            // restrict to 2 decimal places
+            if(this.deductible!=null && this.deductible.indexOf(".")>-1 && (this.deductible.split('.')[1].length > 1)){
+                $event.preventDefault();
+            }
+        },
+        formatTime(timeReturned) {
+            if (!timeReturned) return null
+            
+            const pieces = timeReturned.split(':')
+            let hours
+            let minutes
+            if (pieces.length === 2) {
+                hours = parseInt(pieces[0], 10)
+                minutes = parseInt(pieces[1], 10)
+            }
+            const newFormat = hours >= 12 ? 'PM' : 'AM'
+            hours = hours % 12
+            // To display "0" as "12"
+            hours = hours || 12
+            minutes = minutes < 10 ? '0' + minutes : minutes
+            return `${hours}:${minutes} ${newFormat}`
+        },
+        parseDate(date) {
+          if (typeof date === 'string') return
+            if (!date) return null
+            const [month, day, year] = date.split('/')
+            return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
+        },
+        async submitForm() {
+            this.errorMessage = []
+            const contracts = this.getReports.filter((v) => {
+              return v.ReportType === 'wesi-aob'
+            })
+            const contractsRep = contracts.map((v) => {
+              return v.JobId
+            })
+            await this.$refs.form.validate().then(success => {
+              if (!success) {
+                this.submitting = false
+                this.submitted = false
+                return goTo(0)
+              }
+              if (!contractsRep.includes(this.selectedJobId)) {
+                if ((this.currentStep === 1 && this.paymentOption === 'Card' && this.existingCreditCard === "Yes") || this.currentStep === 2) {
+                  Promise.all([this.onSubmit()]).then((result) => {
+                    this.submitted = true
+                    this.message = result[0]
+                    //I will add this back when we are able to use gmail email service
+                    //this.$refs.downloadBtn.click()
+                    
+                  }).catch(error => console.log(`Error in promises ${error}`))
+                  return;
+                } else if ((this.currentStep === 1 && this.paymentOption !== 'Card') || this.currentStep === 2) {
+                  Promise.all([this.onSubmit()]).then((result) => {
+                    this.submitted = true
+                    this.message = result[0]
+                    this.$refs.downloadBtn.click()
+                  })
+                }
+                this.currentStep++;
+              } else {
+                this.errorMessage.push("Duplicate Job ID is not allowed")
+                this.submitting = false
+                return goTo(0)
+              }
+            })
+        },
+        onSubmit() {
+          this.message = ''
+          this.errorMessage = []
+          const post = {
+            JobId: this.selectedJobId,
+            ReportType: 'wesi-aob',
+            formType: 'aob',
+            contractingCompany: 'Water Emergency Services',
+            subjectProperty: this.subjectProperty,
+            cusSign1: this.cusSign.data,
+            cusSignDate1: this.cusSignDateFormatted,
+            initial1: this.cusInitial1,
+            initial2: this.cusInitial2,
+            initial3: this.cusInitial3,
+            initial4: this.cusInitial4,
+            initial5: this.cusInitial5,
+            initial6: this.cusInitial6,
+            initial7: this.cusInitial7,
+            initial8: this.cusInitial8,
+            insuredTermEndDate: this.insuredEndDateFormatted,
+            insuredPay1: this.insuredPay1,
+            insuredPayDay1: this.insuredPayment.day1DateFormatted,
+            insuredPay2: this.insuredPay2,
+            insuredPayDay5: this.insuredPayment.day5DateFormatted,
+            nonInsuredTermEndDate: this.nonInsuredPayment.endDateFormatted,
+            nonInsuredDay1: this.nonInsuredPayment.day1DateFormatted,
+            nonInsuredDay5: this.nonInsuredPayment.day5DateFormatted,
+            location: this.location,
+            firstName: this.firstName,
+            lastName: this.lastName,
+            email: this.email,
+            driversLicense: this.driversLicense,
+            relation: this.relation,
+            minimumSqft: this.sqft,
+            representativePrint: this.repPrint,
+            repSignature: this.repSign.data,
+            propertyRepOf: this.representativeOf,
+            repDateSign: this.repDateFormatted,
+            witness: this.witness,
+            witnessDate: this.witnessDateFormatted,
+            numberOfRooms: this.numberOfRooms,
+            numberOfFloors: this.numberOfFloors,
+            teamMember: this.getUser,
+            cardNumber: this.cardToUse,
+            paymentOption: this.paymentOption
+          };
+          this.submitting = true
+          this.data = post
+          this.$api.$post("/api/reports/wesi-aob/new", post, {
+              params: {
+                  jobid: selectedJobId.value
+              }
+          }).then((res) => {
+              if (res.error) {
+                  this.errorMessage = res.message
+                  return
+              }
+          }).catch((err) => {
+              this.errorMessage.push(err)
+          })
+         
+         return Promise.resolve("AOB & Mitigation Contract submitted!")
+        },
+        fetchCards(cardnumber) {
+          if (cardnumber === "") return
+          return new Promise((resolve, reject) => {
+            this.$api.$get(`/api/credit-card/${cardnumber}`).then((res) => {
+              this.cards = res
+              resolve(res)
+            }).catch((err) => {
+              reject(err)
+            })
+          })
+        },
+        async getCardImages(card) {
+          var promiseArr = []
+          var storageRef = this.$fire.storage.ref()
+          var listRef = storageRef.child(card)
+          const sendListItems = (item) => {
+            var promise = new Promise((resolve) => {
+              var itemPath = item.fullPath;
+                storageRef.child(itemPath).getDownloadURL().then((url) => {
+                var fileName = itemPath.substring(itemPath.lastIndexOf('/') + 1, itemPath.length)
+                var fileType = itemPath.substring(itemPath.lastIndexOf('.'), itemPath.length)
+                const fileObj = {
+                  cardNumber: card,
+                  name: fileName,
+                  url: url,
+                  type: fileType
+                }                
+                resolve(fileObj)
+              });
+            });
+            return promise.then((cardimage) => {
+              promiseArr.push(cardimage)
+            })
+          }
+          await listRef.listAll().then((res) => {
+            Promise.all(res.items.map(itemRef => sendListItems(itemRef))).then(() => {
+              this.cardImages = promiseArr
+              
+            }).catch(error => console.log(`Error in promises ${error}`))
+          })
+        },
+        generatePdf() {
+          this.$refs.aobhtml2pdf.generatePdf()
+        },
+        settingLocation(params) {
+          this.location.cityStateZip = params.cityStateZip
+          this.location.address = params.address
+        },
+        dataURLtoFile(dataurl, filename) {
+          var arr = dataurl.split(','),
+            mime = arr[0].match(/:(.*?);/)[1],
+            bstr = atob(arr[1]), 
+            n = bstr.length, 
+            u8arr = new Uint8Array(n);
+          while(n--){
+              u8arr[n] = bstr.charCodeAt(n);
+          }        
+          return new File([u8arr], filename, {type:mime});
+        },
+        async beforeDownload({ html2pdf, options, pdfContent }) {
+          const pdfDownload = async () => {
+            return html2pdf().set(options).from(pdfContent).toPdf().get('pdf').then((pdf) => {
+              const totalPages = pdf.internal.getNumberOfPages()
+              for (let i = 1; i <= totalPages; i++) {
+                  pdf.setPage(i)
+                  pdf.setFontSize(14)
+                  pdf.text('Page ' + i + ' of ' + totalPages, (pdf.internal.pageSize.getWidth() * 0.88), (pdf.internal.pageSize.getHeight() - 10))
+              }             
+            }).outputPdf().then((result) => {
+              var file = this.dataURLtoFile(`data:application/pdf;base64,${btoa(result)}`, `aob-${this.selectedJobId}`);
+              return Promise.resolve(file)
+            })
+          }
+          pdfDownload().then((result) => {
+            this.sendMail(result).then((message) => {
+              this.emailSuccess = message
+              this.submitting = false
+            })
+          })
+        },
+        sendMail(attachment) {
+          var formData = new FormData()
+          formData.append('pdf', attachment)
+          formData.append('customer', 'stuck04@gmail.com') // Change later
+          formData.append('subject', `Your Code Red contract #${this.selectedJobId}`)
+          
+          return axios.post(`${process.env.serverUrl}/api/sendemail`, formData, {headers: {'Content-Type': 'multipart/form-data'}}).then((res) => {
+            return Promise.resolve(res.data)
+          }).catch((err) => {
+            console.log(err)
+          })
+        }
+    }
+  }
+</script>

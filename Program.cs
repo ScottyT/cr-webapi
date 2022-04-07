@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.Text.Json.Serialization;
 using cr_app_webapi;
+using cr_app_webapi.Helpers;
 using cr_app_webapi.Models;
 using cr_app_webapi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -10,8 +11,10 @@ using Microsoft.IdentityModel.Tokens;
 
 var MyCorsPolicy = "corsPolicy";
 var builder = WebApplication.CreateBuilder(args);
-
-builder.WebHost.ConfigureKestrel(options => options.ListenLocalhost(8082));
+/* builder.Services.AddSpaStaticFiles(options =>
+{
+    options.RootPath = "client_app/dist";
+}); */
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -53,7 +56,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: MyCorsPolicy,
     b =>
     {
-        b.WithOrigins("http://localhost:3000", "https://staging-174a0.web.app", "https://code-red-app-313517.web.app")
+        b.WithOrigins("https://localhost:7255", "https://localhost:8000", "https://staging-174a0.web.app", "https://code-red-app-313517.web.app")
             .AllowCredentials()
             .WithHeaders("Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization")
             .WithMethods("OPTIONS", "GET", "POST", "PUT", "DELETE");
@@ -71,15 +74,9 @@ builder.Services.AddControllers()
 builder.Services.AddHttpContextAccessor();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(config =>
-{
-    config.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
-    {
-        Title = "CodeRedApp",
-        Version = "v1",
-    });
-});
+
 var app = builder.Build();
+IWebHostEnvironment env = app.Environment;
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -87,18 +84,24 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(); */
     app.UseDeveloperExceptionPage();
 }
-app.UseSwagger();
-app.UseSwaggerUI(c =>
-{
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "CodeRedApp");
-});
 app.UseHttpsRedirection();
 app.UseCors(MyCorsPolicy);
+app.UseStaticFiles();
+/* app.UseSpaStaticFiles();
+app.UseSpa(spa =>
+{
+    spa.Options.SourcePath = "client_app";
+    if (env.IsDevelopment()) {
+        // Launch the server for Nuxt
+        spa.UseNuxtDevelopmentServer();
+    }
+}); */
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseEndpoints(endpoints =>
-{
-    endpoints.MapControllers();
-});
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller}/{action=Index}/{id?}"
+);
+app.MapFallbackToFile("index.html");
 app.Run();

@@ -1,0 +1,11 @@
+// Ref: https://github.com/nuxt-community/vuetify-module#customvariables
+//
+// The variables you want to modify
+// $font-size-root: 20px;
+$spacer: 5px;
+$data-footer-font-size: 16px;
+$list-item-action-icon-margin: 16px;
+$time-picker-ampm-title-font-size: 20px;
+$expansion-panel-header-padding:12px 20px;
+$dialog-margin:12px;
+@import './main.scss';

@@ -1,0 +1,89 @@
+$color-white: #fff;
+$dark-primary-1: #2a73ae;
+$color-grey:#c1c1c1;
+$color-black: #181818;
+$color-red: #b10e0e;
+
+@mixin rangeThumb {
+  width: 40px;
+  height: 40px;
+  margin: -8px 0 0;
+  background: $color-red;
+  cursor: pointer;
+  border: 0 !important;
+  box-shadow:1px 1px 10px 2px rgba(0, 0, 0, .5);
+}
+@mixin rangeTrack {
+  background: #ddd;
+  width:100%;
+  height:22px;
+  border-radius:50px;
+  cursor:pointer;
+}
+@mixin respond($breakpoint) {
+  @if $breakpoint==mobileSmall {
+    @media only screen and (min-width: 375px) {
+      @content;
+    }
+  }
+
+  @if $breakpoint==mobileSmallPort {
+    @media only screen and (min-width:500px) {
+      @content;
+    }
+  }
+
+  @if $breakpoint==mobileSmallPortMax {
+    @media only screen and (max-width:500px - 1px) {
+      @content;
+    }
+  }
+
+  @if $breakpoint==mobileSmallLand {
+    @media only screen and (min-width: 320px) and (max-width: 767px) and (orientation: landscape) {
+      @content;
+    }
+  }
+
+  @if $breakpoint==mobileLarge {
+    @media only screen and (min-width: 768px) {
+      @content;
+    }
+  }
+
+  @if $breakpoint==mobileLargeMax {
+    @media only screen and (max-width: 768px + 1px) {
+      @content;
+    }
+  }
+
+  @if $breakpoint==tabletLarge {
+    @media only screen and (min-width: 991px) {
+      @content;
+    }
+  }
+
+  @if $breakpoint==tabletLargeMax {
+    @media only screen and (max-width: 991px - 1px) {
+      @content;
+    }
+  }
+
+  @if $breakpoint==tabletLandscape {
+    @media only screen and (min-width: 1025px) {
+      @content;
+    }
+  }
+
+  @if $breakpoint==tabletLandscapeMax {
+    @media only screen and (max-width: 1024px) {
+      @content;
+    }
+  }
+
+  @if $breakpoint==desktopSmall {
+    @media only screen and (min-width: 1200px) {
+      @content;
+    }
+  }
+}
