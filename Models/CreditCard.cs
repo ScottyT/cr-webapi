@@ -8,6 +8,11 @@ namespace cr_app_webapi.Models;
 [BsonCollection("credit-cards")]
 public class CreditCard : Document
 {
+    public CreditCard()
+    {
+        createdAt = DateTime.Now;
+        updatedAt = DateTime.Now;
+    }
     public string? ReportType {get; set;}
 
     [JsonConverter(typeof(DictionaryStringObjectJsonConverter))]

@@ -1,8 +1,10 @@
+using System.Net;
 using System.Text.Json;
 using cr_app_webapi.Models;
 using cr_app_webapi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using RestSharp;
 
 namespace cr_app_webapi
 {
@@ -10,7 +12,8 @@ namespace cr_app_webapi
     [Route("api/[controller]")]
     [Authorize("read:users")]
     [Authorize("create:user")]
-    public class EmployeesController : ControllerBase
+    /* [Authorize("update:roles")] */
+    public class EmployeesController : GeneralLogic
     {
         private AuthServices _authService;
         private readonly IMongoRepo<Employee,Employee> _userRepo;
@@ -30,7 +33,7 @@ namespace cr_app_webapi
                     email = projection.email,
                     role = projection.role,
                     team_id = projection.team_id,
-                    fullName = new FullName(projection.fname, projection.lname)
+                    fullName = projection.name
                 }
             );
             return user.ToList();
@@ -45,10 +48,11 @@ namespace cr_app_webapi
                 projection => new
                 {
                     email = projection.email,
-                    fullName = new FullName(projection.fname, projection.lname).Name,
+                    fullName = projection.name,
                     team_id = projection.team_id,
                     role = projection.role,
                     picture = projection.picture,
+                    auth_id = projection.auth_id
                     // Add certifications in the future
                 }
             ).FirstOrDefault();
@@ -59,28 +63,91 @@ namespace cr_app_webapi
             
             return user;
         }
-        
-        [HttpPost("create")]
-        public async Task<IActionResult> CreateUser(UserObj e)
+
+        [HttpPut("update/{id}")]
+        public async Task UpdateUser(string id, Employee emp)
         {
-            /* Object userInAuth0 = new 
+            await _authService.UpdateUser(emp, id);
+            await _userRepo.GenericFindOneUpdate<Employee>(
+                f => f.auth_id == id, emp, true
+            );
+        }
+
+        [HttpPost("auth/create")]
+        public async Task<IActionResult> CreateAuth0User(UserObj user)
+        {
+            AuthUser userInAuth0 = new AuthUser
             {
                 connection = "Username-Password-Authentication",
-                email = newEmployee.email,
-                password = newEmployee
-            }; */
-            /* UserObj authUser = new UserObj
+                email = user.email,
+                password = user.password,
+                username = user.username,
+                name = new FullName(user.fname, user.lname).Name,
+                user_metadata = new UserMetadata { 
+                    certifications = new List<string>(),
+                    role = user.role,
+                    id = user.team_id
+                }
+            };
+            Employee employee = new Employee
             {
-                connection = "Username-Password-Authentication",
-                email = e.email,
-                password = e.password,
-                username = e.username,
-                user_metadata = e.user_metadata
-            }; */
-            //await _userRepo.SaveOneAsync(e.employee);
-            if (e is null) return BadRequest();
-            await _authService.CreateUser(e);
-            return CreatedAtAction(nameof(Get), new { }, "Successfully created new user!");
+                email = user.email,
+                fname = user.fname,
+                lname = user.lname,
+                name = new FullName(user.fname, user.lname).Name,
+                username = user.username,
+                team_id = user.team_id,
+                role = user.role
+            };
+            if (user is null) return BadRequest();
+
+            RestResponse response = await _authService.CreateUser(userInAuth0);
+            if (!response.IsSuccessful)
+            {
+                return ErrorHandling(response.StatusCode, response.Content);
+            }
+
+            if (employee is null) return BadRequest("Can't add userto database");
+            
+            return Ok("Successfully created new user!");
+        }
+        
+        /* [HttpPost("create")]
+        public async Task<IActionResult> CreateEmployee([FromBody] UserObj newUser)
+        {
+            Employee employee = new Employee
+            {
+                email = newUser.email,
+                fname = newUser.fname,
+                lname = newUser.lname,
+                name = new FullName(newUser.fname, newUser.lname).Name,
+                username = newUser.username,
+                team_id = newUser.team_id,
+                role = newUser.role
+            };
+
+            if (newUser is null) return BadRequest();
+
+            await _userRepo.InsertOneAsync(employee);
+            return CreatedAtAction(nameof(Get), "Successfully created new user!");
+        } */
+
+        public override ActionResult ErrorHandling(HttpStatusCode statusCode, string? httpContent)
+        {
+            if (!ValidExtensions.IsValid<string>(httpContent))
+            {
+                return BadRequest();
+            }
+            var errorContent = JsonSerializer.Deserialize<object>(httpContent);
+            if (statusCode == HttpStatusCode.Conflict)
+            {
+                return Conflict(errorContent);
+            }
+            if (statusCode == HttpStatusCode.NotFound)
+            {
+                return NotFound(errorContent);
+            }
+            return BadRequest();
         }
     }
 }

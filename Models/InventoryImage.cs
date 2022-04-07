@@ -13,10 +13,8 @@ namespace cr_app_webapi.Models
             updatedAt = DateTime.Now;
         }
         public string JobId {get; set;} = default!;
-        //public ImageModel? img {get; set;} //= new List<ImageModel>();
         public FileModel? img {get; set;}
-        [BsonIgnore]
-        public string? ItemNumber {get; set;}
+        public int ItemNumber {get; set;}
     }
 
     public class FileModel

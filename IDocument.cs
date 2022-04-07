@@ -5,7 +5,7 @@ namespace cr_app_webapi;
 public interface IDocument
 {
     string? Id { get; set; }
-    DateTime createdAt { get; set; }
+    DateTime createdAt { get; }
     DateTime updatedAt {get; set;}
 }
 public class Document : IDocument
@@ -14,7 +14,7 @@ public class Document : IDocument
     [BsonRepresentation(BsonType.ObjectId)]
     public string? Id { get; set; }
     public DateTime createdAt {get; set;}
-    public DateTime updatedAt {get; set;}
+    public DateTime updatedAt {get;set;}
 }
 
 [AttributeUsage(AttributeTargets.Class, Inherited = false)]

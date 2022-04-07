@@ -4,6 +4,8 @@ using System.Text.Json;
 using cr_app_webapi.Models;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using MongoDB.Driver.GridFS;
+
 namespace cr_app_webapi.Services
 {
     public class MongoRepo<TDocument, TForeign> : IMongoRepo<TDocument, TForeign>
@@ -92,13 +94,13 @@ namespace cr_app_webapi.Services
                 return Task.Run(() => "There is an error with the data.");
             }
             doc.updatedAt = time;
-            doc.createdAt = time;
             return Task.Run(() =>  _collection.InsertOneAsync(doc));
         }
 
-        public virtual Task InsertOneAsync(TDocument document)
+        public async Task InsertOneAsync(TDocument document)
         {
-            return Task.Run(() => _collection.InsertOneAsync(document));
+           // return Task.Run(() => _collection.InsertOneAsync(document));
+           await _collection.InsertOneAsync(document);
         }
 
         public virtual Task GenericFindOneUpdate<TProjected>(Expression<Func<TDocument, bool>> filter, TDocument document, bool upsert = false, bool project = false)
@@ -116,7 +118,10 @@ namespace cr_app_webapi.Services
             }
             foreach(PropertyInfo field in document.GetType().GetProperties())
             {
-                updateDefList.Add(Builders<TDocument>.Update.Set(field.Name, field.GetValue(document, null)));
+                if (field.GetValue(document, null) is not null)
+                {
+                    updateDefList.Add(Builders<TDocument>.Update.Set(field.Name, field.GetValue(document, null)));
+                }
             }
             updateDefList.Add(Builders<TDocument>.Update.Set("updatedAt", time));
             var updateOptions = new FindOneAndUpdateOptions<TDocument, TProjected> { IsUpsert = upsert };
@@ -129,9 +134,9 @@ namespace cr_app_webapi.Services
             throw new NotImplementedException();
         }
 
-        public Task DeleteByIdAsync(string id)
+        public async Task DeleteByIdAsync(Expression<Func<TDocument, bool>> filter)
         {
-            throw new NotImplementedException();
+            await _collection.DeleteOneAsync(filter);
         }
 
         public void DeleteMany(Expression<Func<TDocument, bool>> filterExpression)

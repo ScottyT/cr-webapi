@@ -10,10 +10,8 @@ using Microsoft.IdentityModel.Tokens;
 
 var MyCorsPolicy = "corsPolicy";
 var builder = WebApplication.CreateBuilder(args);
-var port = Environment.GetEnvironmentVariable("PORT") ?? "8082";
-var url = $"http://localhost:{port}";
-var appUrl = Environment.GetEnvironmentVariable("APP_URL") ?? "http://localhost:3000";
 
+builder.WebHost.ConfigureKestrel(options => options.ListenLocalhost(8082));
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -53,9 +51,9 @@ builder.Services.AddSingleton<ICodeRedDatabaseSettings>(sp =>
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: MyCorsPolicy,
-    builder =>
+    b =>
     {
-        builder.WithOrigins("http://localhost:3000", "https://staging-174a0.web.app", "https://code-red-app-313517.web.app")
+        b.WithOrigins("http://localhost:3000", "https://staging-174a0.web.app", "https://code-red-app-313517.web.app")
             .AllowCredentials()
             .WithHeaders("Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization")
             .WithMethods("OPTIONS", "GET", "POST", "PUT", "DELETE");
@@ -103,4 +101,4 @@ app.UseEndpoints(endpoints =>
 {
     endpoints.MapControllers();
 });
-app.Run(url);
+app.Run();

@@ -14,12 +14,12 @@ namespace cr_app_webapi.Controllers
     [Authorize("read:reports")]
     public class ImageController : ControllerBase
     {
-        private readonly IMongoRepo<InventoryImage,InventoryImage> _image;
-        private readonly ReportsService _reportsService;
-        public ImageController(IMongoRepo<InventoryImage,InventoryImage> image, ReportsService reportsService)
+        private readonly IMongoRepo<InventoryImage, InventoryImage> _image;
+        private AuthServices _authService;
+        public ImageController(IMongoRepo<InventoryImage, InventoryImage> image, AuthServices authServices)
         {
             _image = image;
-            _reportsService = reportsService;
+            _authService = authServices;
         }
 
         [HttpGet("inventory")]
@@ -43,48 +43,58 @@ namespace cr_app_webapi.Controllers
             return images;
         } */
 
-        [HttpPut("upload/content-inventory-image")]
+        [HttpPost("upload/content-inventory-image")]
         public async Task<IActionResult> UploadImage([FromForm] InventoryImage? data)
         {
             IFormFileCollection? images = Request.Form.Files;
+            IFormFile? image = Request.Form.Files[0];
             if (!ValidExtensions.IsValid<IFormFileCollection>(images))
             {
                 return BadRequest("Image is not valid.");
             }
-            if (images.Count <= 0) return Ok("no files");
+            if (images.Count <= 0) return Ok("no files uploaded");
             if (data is null) return BadRequest("No form data");
-            foreach (var image in images)
+            var ogName = Path.GetFileName(image.FileName);
+            var extensionType = image.ContentType.Split('/')[1];
+            var filePath = Path.Combine("Uploads", "img");
+            using (var stream = System.IO.File.Create(filePath))
             {
-                if (image.Length > 0)
-                {
-                    var ogName = Path.GetFileName(image.FileName);
-                    var extensionType = image.ContentType.Split('/')[1];
-                    var filePath = Path.Combine("Uploads", "single");
-                    using (var stream = System.IO.File.Create(filePath))
-                    {
-                        await image.CopyToAsync(stream);
-                    }
-
-                    var file = System.IO.File.ReadAllBytes(filePath);
-                    FileModel img = new FileModel()
-                    {
-                        data = file,
-                        contentType = image.ContentType,
-                        size = file.Length,
-                        filename = ogName
-                    };
-
-                    InventoryImage formData = new InventoryImage()
-                    {
-                        img = img,
-                        JobId = data.JobId
-                    };
-                   
-                    await _image.InsertOneAsync(formData);
-                }
+                await image.CopyToAsync(stream);
             }
 
-            return CreatedAtAction(nameof(GetAll), "Uploaded image");
+            var file = System.IO.File.ReadAllBytes(filePath);
+            var item = new FileModel
+            {
+                data = file,
+                contentType = image.ContentType,
+                size = file.Length,
+                filename = ogName
+            };
+
+            InventoryImage formData = new InventoryImage()
+            {
+                img = item,
+                JobId = data.JobId,
+                ItemNumber = data.ItemNumber
+            };
+
+            Task task = _image.InsertOneAsync(formData);
+            task.Wait();
+
+            return CreatedAtAction(nameof(GetAll), new { id = formData.Id }, formData.Id);
+        }
+
+        [HttpDelete("{id:length(24)}")]
+        public async Task<IActionResult> Delete(string id)
+        {
+            var image = _image.FilterBy(f => f.Id == id).FirstOrDefault();
+            if (image is null)
+            {
+                return NotFound();
+            }
+
+            await _image.DeleteByIdAsync(f => f.Id == id);
+            return NoContent();
         }
     }
 }

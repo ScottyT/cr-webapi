@@ -30,7 +30,7 @@ public interface IMongoRepo<TDocument, TForeign> where TDocument : IDocument, ne
     );
     void DeleteById(string id);
 
-    Task DeleteByIdAsync(string id);
+    Task DeleteByIdAsync(Expression<Func<TDocument, bool>> filter);
 
     void DeleteMany(Expression<Func<TDocument, bool>> filterExpression);
 
