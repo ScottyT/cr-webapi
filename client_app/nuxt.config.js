@@ -102,7 +102,7 @@ module.exports = {
     '@nuxtjs/proxy'
   ],
   proxy: {
-    '/api': {
+    '/api/*': {
       target: target
     }
   },
@@ -273,9 +273,5 @@ module.exports = {
         }
       },
     },
-  },
-  generate: {
-    fallback: '404.html',
-    interval: 2000
   }
 }

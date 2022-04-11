@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace cr_app_webapi.Controllers
 {
     [ApiController]
-    [Route("api/credit-card")]
+    [Route("credit-card")]
     [Authorize("read:reports")]
     public class CreditCardController : ControllerBase
     {

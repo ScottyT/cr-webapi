@@ -6,7 +6,7 @@ using System.Text.Json;
 namespace cr_app_webapi.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("[controller]")]
 public class CertificationsController : ControllerBase
 {
     private readonly IMongoRepo<Certification,Certification> _certification;

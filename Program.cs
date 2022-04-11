@@ -11,6 +11,8 @@ using Microsoft.IdentityModel.Tokens;
 
 var MyCorsPolicy = "corsPolicy";
 var builder = WebApplication.CreateBuilder(args);
+/* var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+var url = $"http://0.0.0.0:{port}"; */
 /* builder.Services.AddSpaStaticFiles(options =>
 {
     options.RootPath = "client_app/dist";
@@ -56,24 +58,20 @@ builder.Services.AddCors(options =>
     options.AddPolicy(name: MyCorsPolicy,
     b =>
     {
-        b.WithOrigins("https://localhost:7255", "https://localhost:8000", "https://staging-174a0.web.app", "https://code-red-app-313517.web.app")
+        b.WithOrigins("https://localhost:41395", "http://localhost:3000", "https://staging-174a0.web.app", "https://code-red-app-313517.web.app")
             .AllowCredentials()
             .WithHeaders("Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization")
             .WithMethods("OPTIONS", "GET", "POST", "PUT", "DELETE");
     });
 });
 
-builder.Services.AddControllers()
-    .AddJsonOptions(
-        options =>
-        {
-            options.JsonSerializerOptions.PropertyNamingPolicy = null;
-            options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
-        }
-    );
+builder.Services.AddControllersWithViews(options =>
+{
+    options.RespectBrowserAcceptHeader = true;
+});
 builder.Services.AddHttpContextAccessor();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
+//builder.Services.AddEndpointsApiExplorer();
 
 var app = builder.Build();
 IWebHostEnvironment env = app.Environment;
@@ -84,6 +82,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(); */
     app.UseDeveloperExceptionPage();
 }
+//app.UseHsts();
 app.UseHttpsRedirection();
 app.UseCors(MyCorsPolicy);
 app.UseStaticFiles();
@@ -94,6 +93,7 @@ app.UseSpa(spa =>
     if (env.IsDevelopment()) {
         // Launch the server for Nuxt
         spa.UseNuxtDevelopmentServer();
+        //spa.UseProxyToSpaDevelopmentServer("http://localhost:3000");
     }
 }); */
 app.UseRouting();
@@ -101,7 +101,10 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller}/{action=Index}/{id?}"
-);
+    pattern: "{controller}/{action=Index}/{id?}");
+/* app.UseEndpoints(endpoints =>
+{
+    endpoints.MapControllers();
+}); */
 app.MapFallbackToFile("index.html");
 app.Run();

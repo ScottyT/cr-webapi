@@ -10,7 +10,7 @@ using System.Text.Json;
 namespace cr_app_webapi.Controllers
 {
     [ApiController]
-    [Route("api/image")]
+    [Route("image")]
     [Authorize("read:reports")]
     public class ImageController : ControllerBase
     {

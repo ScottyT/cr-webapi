@@ -9,7 +9,7 @@ using System.Text.Json;
 namespace cr_app_webapi.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("[controller]")]
 [Authorize("read:reports")]
 public class ReportsController : ControllerBase
 {

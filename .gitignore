@@ -12,6 +12,7 @@
 
 appsettings.json
 appsettings.Development.json
+cloudbuild.yaml
 Uploads
 # *.xml
 # User-specific files (MonoDevelop/Xamarin Studio)

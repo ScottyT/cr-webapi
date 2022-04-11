@@ -50,12 +50,36 @@ const actions = {
 
         var email = this.$auth.user.email
         var options = {
-            params: {
+            headers: { accept: 'application/json', authorization: this.$auth.$storage.getCookie("_token.auth0") }
+            /* params: {
                 id: this.$auth.user.sub
-            }
+            } */
         }
         commit('setLoading', true)
-        this.$api.$get(`/api/employees/${email}`, options).then((res) => {
+        fetch(`https://localhost:7255/api/employees/${email}?id=${this.$auth.user.sub}`, options)
+            .then(res => res.json())
+            .then((data) => {
+            
+                dispatch('getSigOrInitialImage', {
+                    email: email,
+                    signType: 'signature.jpg'
+                })
+                dispatch('getSigOrInitialImage', {
+                    email: email,
+                    signType: 'initial.jpg'
+                })
+                commit('setUser', {
+                    email: data.email,
+                    name: data.fullName,
+                    avatarurl: this.$auth.user.picture,
+                    role: data.role,
+                    id: data.team_id,
+                    auth_id: data.auth_id
+                })
+                commit('setLoading', false)
+            })
+            
+        /* this.$api.$get(`/api/employees/${email}`, options).then((res) => {
             dispatch('getSigOrInitialImage', {
                 email: email,
                 signType: 'signature.jpg'
@@ -77,7 +101,7 @@ const actions = {
             commit('setLoading', false)[
                 console.error(err)
             ]
-        })
+        }) */
     },
     async onAuthStateChangedAction({ commit, dispatch }, { authUser, claims }) {
         if (!authUser) {

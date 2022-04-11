@@ -9,7 +9,8 @@ using RestSharp;
 namespace cr_app_webapi
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Produces("application/json")]
+    [Route("[controller]")]
     [Authorize("read:users")]
     [Authorize("create:user")]
     /* [Authorize("update:roles")] */
@@ -58,7 +59,7 @@ namespace cr_app_webapi
             ).FirstOrDefault();
             if (user is null)
             {
-                return NoContent();
+                return NotFound();
             }
             
             return user;
