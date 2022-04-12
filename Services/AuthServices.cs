@@ -13,13 +13,15 @@ namespace cr_app_webapi.Services
         private readonly RestClient _client;
         private readonly string? _clientId;
         private readonly string? _clientSecret;
+        private readonly string? _authority;
 
         public AuthServices(IOptions<Auth0Settings> settings, IConfiguration config)
         {
             _config = config;
             _clientId = settings.Value.ClientId;
             _clientSecret = settings.Value.ClientSecret;
-            var options = new RestClientOptions("https://" + _config["Auth0:Domain"] + "/api/v2/");
+            _authority = settings.Value.Authority;
+            var options = new RestClientOptions(settings.Value.Authority + "api/v2/");
             _client = new RestClient(options);
         }
 
@@ -31,12 +33,12 @@ namespace cr_app_webapi.Services
         public async Task<TokenResponse?> GetToken()
         {
             TokenResponse? response = new TokenResponse();
-            using var client = new RestClient(_config["Auth0:Authority"]);
+            using var client = new RestClient(_authority!); //new RestClient(_config["Auth0:Authority"]);
             var request = new RestRequest("oauth/token");
             var body =  new {
                 client_id = _clientId,
                 client_secret = _clientSecret,
-                audience = "https://" + _config["Auth0:Domain"] + "/api/v2/",
+                audience = _authority + "api/v2/",
                 grant_type = "client_credentials"
             };
             request.AddObject(body);

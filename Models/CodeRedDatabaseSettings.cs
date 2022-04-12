@@ -21,6 +21,7 @@ namespace cr_app_webapi.Models
         public string? ClientSecret {get; set;}
         public string? Audience {get; set;}
         public string? ApiUrl {get; set;}
+        public string? Authority {get; set;}
     }
     public interface ICodeRedDatabaseSettings
     {

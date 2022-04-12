@@ -13,12 +13,12 @@ namespace cr_app_webapi
     [Authorize("read:users")]
     [Authorize("create:user")]
     /* [Authorize("update:roles")] */
-    public class EmployeesController : GeneralLogic
+    public class EmployeesController : ErrorLogic
     {
         private AuthServices _authService;
-        private readonly IMongoRepo<Employee,Employee> _userRepo;
+        private readonly IMongoRepo<Employee, Employee> _userRepo;
 
-        public EmployeesController(AuthServices authService, IMongoRepo<Employee,Employee> userRepo)
+        public EmployeesController(AuthServices authService, IMongoRepo<Employee, Employee> userRepo)
         {
             _userRepo = userRepo;
             _authService = authService;
@@ -38,7 +38,7 @@ namespace cr_app_webapi
             );
             return user.ToList();
         }
-            
+
 
         [HttpGet("{email}")]
         public ActionResult<Object> GetUser(string email, string id)
@@ -60,7 +60,7 @@ namespace cr_app_webapi
             {
                 return NoContent();
             }
-            
+
             return user;
         }
 
@@ -83,7 +83,8 @@ namespace cr_app_webapi
                 password = user.password,
                 username = user.username,
                 name = new FullName(user.fname, user.lname).Name,
-                user_metadata = new UserMetadata { 
+                user_metadata = new UserMetadata
+                {
                     certifications = new List<string>(),
                     role = user.role,
                     id = user.team_id
@@ -108,10 +109,10 @@ namespace cr_app_webapi
             }
 
             if (employee is null) return BadRequest("Can't add userto database");
-            
+
             return Ok("Successfully created new user!");
         }
-        
+
         /* [HttpPost("create")]
         public async Task<IActionResult> CreateEmployee([FromBody] UserObj newUser)
         {
@@ -138,6 +139,7 @@ namespace cr_app_webapi
             {
                 return BadRequest();
             }
+
             var errorContent = JsonSerializer.Deserialize<object>(httpContent);
             if (statusCode == HttpStatusCode.Conflict)
             {
@@ -147,6 +149,7 @@ namespace cr_app_webapi
             {
                 return NotFound(errorContent);
             }
+
             return BadRequest();
         }
     }

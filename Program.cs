@@ -5,31 +5,36 @@ using cr_app_webapi.Models;
 using cr_app_webapi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using static System.Net.Mime.MediaTypeNames;
 
 var MyCorsPolicy = "corsPolicy";
 var builder = WebApplication.CreateBuilder(args);
-
-builder.WebHost.ConfigureKestrel(options => options.ListenLocalhost(8082));
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+var url = $"http://localhost:{port}";
+//builder.WebHost.ConfigureKestrel(options => options.ListenLocalhost(8082));
+//builder.WebHost.UseUrls("http://0.0.0.0:8080");
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-}).AddJwtBearer(options => 
+}).AddJwtBearer(options =>
 {
     options.SaveToken = true;
-    options.Authority = builder.Configuration["Auth0:Authority"];
-    options.Audience = builder.Configuration["Auth0:Audience"];
+    options.Authority = builder.Configuration.GetSection("Auth0")["Authority"]; //builder.Configuration["Auth0:Authority"];
+    options.Audience = builder.Configuration.GetSection("Auth0")["Audience"]; //builder.Configuration["Auth0:Audience"];
     options.TokenValidationParameters = new TokenValidationParameters
     {
         NameClaimType = ClaimTypes.NameIdentifier
     };
-    
+
 });
+Console.WriteLine(builder.Configuration.GetSection("Auth0")["Authority"]);
 builder.Services.AddAuthorization(options =>
 {
-    var domain = $"https://{builder.Configuration["Auth0:Domain"]}/";
+    var domain = builder.Configuration.GetSection("Auth0")["Authority"];
     options.AddPolicy("read:users", policy => policy.Requirements.Add(new HasScopeRequirement("read:users", domain)));
     options.AddPolicy("read:reports", policy => policy.Requirements.Add(new HasScopeRequirement("read:reports", domain)));
     options.AddPolicy("create:user", policy => policy.Requirements.Add(new HasScopeRequirement("create:user", domain)));
@@ -60,14 +65,13 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddControllers()
-    .AddJsonOptions(
-        options =>
-        {
-            options.JsonSerializerOptions.PropertyNamingPolicy = null;
-            options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
-        }
-    );
+builder.Services.AddControllers().AddJsonOptions(
+    options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = null;
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    }
+);
 builder.Services.AddHttpContextAccessor();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -101,4 +105,8 @@ app.UseEndpoints(endpoints =>
 {
     endpoints.MapControllers();
 });
-app.Run();
+/* if (app.Environment.IsDevelopment())
+{
+    app.Run(url);
+} */
+app.Run(url);
