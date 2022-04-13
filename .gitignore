@@ -12,6 +12,7 @@
 
 appsettings.json
 appsettings.Development.json
+*.pem
 Uploads
 # *.xml
 # User-specific files (MonoDevelop/Xamarin Studio)

@@ -17,7 +17,7 @@
     <PackageReference Include="MongoDB.Driver.GridFS" Version="2.15.0" />
     <PackageReference Include="RestSharp" Version="107.2.1" />
     <PackageReference Include="Rick.Docs.Samples.RouteInfo" Version="1.0.0.6" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.3.0" />
   </ItemGroup>
 
 </Project>

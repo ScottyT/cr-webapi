@@ -11,17 +11,18 @@ namespace cr_app_webapi
     [ApiController]
     [Route("api/[controller]")]
     [Authorize("read:users")]
-    [Authorize("create:user")]
-    /* [Authorize("update:roles")] */
-    public class EmployeesController : ErrorLogic
+    [Authorize("update:roles")]
+    public class EmployeesController : ControllerBase
     {
         private AuthServices _authService;
         private readonly IMongoRepo<Employee, Employee> _userRepo;
+        private readonly IHttpContextAccessor _contextAccessor;
 
         public EmployeesController(AuthServices authService, IMongoRepo<Employee, Employee> userRepo)
         {
             _userRepo = userRepo;
             _authService = authService;
+            _contextAccessor = new HttpContextAccessor();
         }
 
         [HttpGet]
@@ -105,7 +106,7 @@ namespace cr_app_webapi
             RestResponse response = await _authService.CreateUser(userInAuth0);
             if (!response.IsSuccessful)
             {
-                return ErrorHandling(response.StatusCode, response.Content);
+                await HandleError(_contextAccessor, response?.Content!);
             }
 
             if (employee is null) return BadRequest("Can't add userto database");
@@ -133,24 +134,11 @@ namespace cr_app_webapi
             return CreatedAtAction(nameof(Get), "Successfully created new user!");
         } */
 
-        public override ActionResult ErrorHandling(HttpStatusCode statusCode, string? httpContent)
+        private async Task HandleError(IHttpContextAccessor context, string message)
         {
-            if (!ValidExtensions.IsValid<string>(httpContent))
-            {
-                return BadRequest();
-            }
-
-            var errorContent = JsonSerializer.Deserialize<object>(httpContent);
-            if (statusCode == HttpStatusCode.Conflict)
-            {
-                return Conflict(errorContent);
-            }
-            if (statusCode == HttpStatusCode.NotFound)
-            {
-                return NotFound(errorContent);
-            }
-
-            return BadRequest();
+            var httpContext = context.HttpContext;
+            if (httpContext is null) return;
+            await httpContext.Response.WriteAsJsonAsync("Error: " + message);
         }
     }
 }

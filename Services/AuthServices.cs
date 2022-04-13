@@ -11,11 +11,12 @@ namespace cr_app_webapi.Services
     {
         private readonly IConfiguration _config;
         private readonly RestClient _client;
+        private readonly IMongoRepo<Employee, Employee> _userRepo;
         private readonly string? _clientId;
         private readonly string? _clientSecret;
         private readonly string? _authority;
 
-        public AuthServices(IOptions<Auth0Settings> settings, IConfiguration config)
+        public AuthServices(IOptions<Auth0Settings> settings, IConfiguration config, IMongoRepo<Employee, Employee> userRepo)
         {
             _config = config;
             _clientId = settings.Value.ClientId;
@@ -23,6 +24,7 @@ namespace cr_app_webapi.Services
             _authority = settings.Value.Authority;
             var options = new RestClientOptions(settings.Value.Authority + "api/v2/");
             _client = new RestClient(options);
+            _userRepo = userRepo;
         }
 
         public void Dispose()
@@ -49,6 +51,19 @@ namespace cr_app_webapi.Services
     
         public async Task<RestResponse> GetUser(string userid)
         {
+            var user = _userRepo.FilterBy(
+                filter => filter.auth_id == userid,
+                project => new
+                {
+                    email = project.email,
+                    fullName = project.name,
+                    team_id = project.team_id,
+                    role = project.role,
+                    picture = project.picture,
+                    auth_id = project.auth_id
+                }
+            ).FirstOrDefault();
+            if (user == null) return null!;
             var token = await GetToken();
             var request = new RestRequest("users/" + userid);
             request.AddHeader("authorization", "Bearer "+ token?.AccessToken);
