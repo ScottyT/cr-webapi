@@ -19,7 +19,7 @@ var url = $"http://0.0.0.0:{port}";
 //builder.WebHost.UseUrls("http://0.0.0.0:8080");
 {
     var services = builder.Services;
-    services.AddAuthentication(options =>
+    /* services.AddAuthentication(options =>
     {
         options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
         options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -39,7 +39,8 @@ var url = $"http://0.0.0.0:{port}";
         options.AddPolicy("read:users", policy => policy.Requirements.Add(new HasScopeRequirement("read:users", domain)));
         options.AddPolicy("read:reports", policy => policy.Requirements.Add(new HasScopeRequirement("read:reports", domain)));
         options.AddPolicy("create:user", policy => policy.Requirements.Add(new HasScopeRequirement("create:user", domain)));
-    });
+        options.AddPolicy("update:roles", policy => policy.Requirements.Add(new HasScopeRequirement("update:roles", domain)));
+    }); */
     // Add services to the container.
     services.Configure<CodeRedDatabaseSettings>(
         builder.Configuration.GetSection("CodeRedDatabase")
@@ -86,7 +87,7 @@ var url = $"http://0.0.0.0:{port}";
     {
         config.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
         {
-            Title = "CodeRedApp",
+            Title = "CodeRedAppApi",
             Version = "v1",
         });
     });
@@ -97,28 +98,30 @@ app.UseForwardedHeaders();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwagger(options =>
+    {
+        options.SerializeAsV2 = true;
+    });
+    //app.UseSwaggerUI();
     app.UseDeveloperExceptionPage();
 }
 else 
 {
     app.UseHsts();
 }
-app.UseSwagger(options =>
-{
-    options.SerializeAsV2 = true;
-});
+
 app.UseSwaggerUI(c =>
 {
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "CodeRedApp");
+    //c.SwaggerEndpoint("/swagger/v1/swagger.json", "CodeRedApp");
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "CodeRedAppApi");
 });
+
 app.UseHttpsRedirection();
 app.UseCors(MyCorsPolicy);
 app.UseRouting();
 //app.UseMiddleware<JwtMiddleware>();
-app.UseAuthentication();
-app.UseAuthorization();
+/* app.UseAuthentication();
+app.UseAuthorization(); */
 app.UseEndpoints(endpoints =>
 {
     endpoints.MapControllers();

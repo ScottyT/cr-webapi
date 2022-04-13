@@ -10,8 +10,8 @@ namespace cr_app_webapi
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize("read:users")]
-    [Authorize("update:roles")]
+    /* [Authorize("read:users")]
+    [Authorize("update:roles")] */
     public class EmployeesController : ControllerBase
     {
         private AuthServices _authService;

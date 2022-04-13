@@ -7,7 +7,6 @@ namespace cr_app_webapi.Controllers
 {
     [ApiController]
     [Route("api/credit-card")]
-    [Authorize]
     public class CreditCardController : ControllerBase
     {
         private readonly IMongoRepo<CreditCard,CreditCard> _creditCard;

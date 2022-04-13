@@ -10,7 +10,7 @@ namespace cr_app_webapi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize("read:reports")]
+/* [Authorize("read:reports")] */
 public class ReportsController : ControllerBase
 {
     private readonly IMongoRepo<Report, Report> _report;
