@@ -18,6 +18,7 @@ Uploads
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 .github/workflows
+*.yaml
 
 # Mono auto generated files
 mono_crash.*

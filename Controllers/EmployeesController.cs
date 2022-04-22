@@ -10,8 +10,6 @@ namespace cr_app_webapi
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize("read:users")]
-    [Authorize("update:roles")]
     public class EmployeesController : ControllerBase
     {
         private AuthServices _authService;
@@ -40,7 +38,7 @@ namespace cr_app_webapi
             return user.ToList();
         }
 
-
+        
         [HttpGet("{email}")]
         public ActionResult<Object> GetUser(string email, string id)
         {

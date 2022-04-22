@@ -7,6 +7,10 @@ using RestSharp.Serializers;
 
 namespace cr_app_webapi.Services
 {
+    /* public interface IAuthServices
+    {
+        Employee Authenticate()
+    } */
     public class AuthServices : IDisposable
     {
         private readonly IConfiguration _config;

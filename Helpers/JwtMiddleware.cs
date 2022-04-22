@@ -18,9 +18,10 @@ public class JwtMiddleware
     }
     public async Task Invoke(HttpContext context, AuthServices authServices)
     {
-        var token = await authServices.GetToken();
+        var token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();  // await authServices.GetToken();
+        Console.WriteLine("Token: ", token);
         if (token != null)
-            attachUserToContext(context, authServices, token.AccessToken!);
+            attachUserToContext(context, authServices, token!);
 
         await _next(context);
     }
@@ -29,17 +30,20 @@ public class JwtMiddleware
     {
         try
         {
+            Console.WriteLine("context:", context);
             var cert = new X509Certificate2(Convert.FromBase64String(_appSettings.CertPem));
+            Console.WriteLine("Cert: ", cert);
             var claims = JwtBuilder.Create()
                 .WithAlgorithm(new RS256Algorithm(cert))
                 .MustVerifySignature()
                 .Decode<IDictionary<string, object>>(token);
+            Console.WriteLine("claims: ", claims);
             var userId = claims["sub"].ToString();
             context.Items["User"] = authServices.GetUser(userId!);
         }
         catch
         {
-
+            Console.WriteLine("error");
         }
     }
 }

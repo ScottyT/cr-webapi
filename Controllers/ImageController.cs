@@ -11,7 +11,6 @@ namespace cr_app_webapi.Controllers
 {
     [ApiController]
     [Route("api/image")]
-    [Authorize]
     public class ImageController : ControllerBase
     {
         private readonly IMongoRepo<InventoryImage, InventoryImage> _image;
