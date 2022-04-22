@@ -1,3 +1,4 @@
+using System.Net;
 using System.Security.Claims;
 using System.Text.Json.Serialization;
 using cr_app_webapi;
@@ -13,12 +14,17 @@ using Microsoft.IdentityModel.Tokens;
 
 var MyCorsPolicy = "corsPolicy";
 var builder = WebApplication.CreateBuilder(args);
-var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
-var url = $"http://0.0.0.0:{port}";
-//builder.WebHost.ConfigureKestrel(options => options.ListenLocalhost(8082));
+/* var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+var url = $"http://0.0.0.0:{port}"; */
+builder.WebHost.ConfigureKestrel(options =>
+{
+    var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+    options.Listen(IPAddress.Any, int.Parse(port));
+});
 //builder.WebHost.UseUrls("http://0.0.0.0:8080");
 {
     var services = builder.Services;
+    // Commenting this out because using this with Google API Gateway cause this app to always have unauthorized access. If use with Azure API Management this wont happen
     /* services.AddAuthentication(options =>
     {
         options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -119,15 +125,8 @@ app.UseSwaggerUI(c =>
 app.UseHttpsRedirection();
 app.UseCors(MyCorsPolicy);
 app.UseRouting();
-//app.UseMiddleware<JwtMiddleware>();
-/* app.UseAuthentication();
-app.UseAuthorization(); */
 app.UseEndpoints(endpoints =>
 {
     endpoints.MapControllers();
 });
-/* if (app.Environment.IsDevelopment())
-{
-    app.Run(url);
-} */
-app.Run(url);
+app.Run();

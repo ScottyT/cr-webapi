@@ -4,7 +4,9 @@ public class HasScopeHandler : AuthorizationHandler<HasScopeRequirement>
 {
     protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, HasScopeRequirement requirement)
     {
+        
         var user = context.User.FindFirst(c => c.Type == "scope" && c.Issuer == requirement.Issuer);
+        Console.WriteLine("authorization context: ", user);
         if (user is null)
             return Task.CompletedTask;
         var claim = context.User.Claims;
