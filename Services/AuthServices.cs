@@ -60,7 +60,7 @@ namespace cr_app_webapi.Services
                 project => new
                 {
                     email = project.email,
-                    fullName = project.name,
+                    fullName = project.full_name,
                     team_id = project.team_id,
                     role = project.role,
                     picture = project.picture,

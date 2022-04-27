@@ -10,6 +10,8 @@ namespace cr_app_webapi
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize("read:users")]
+    
     public class EmployeesController : ControllerBase
     {
         private AuthServices _authService;
@@ -32,7 +34,7 @@ namespace cr_app_webapi
                     email = projection.email,
                     role = projection.role,
                     team_id = projection.team_id,
-                    fullName = projection.name
+                    fullName = projection.full_name
                 }
             );
             return user.ToList();
@@ -47,7 +49,7 @@ namespace cr_app_webapi
                 projection => new
                 {
                     email = projection.email,
-                    fullName = projection.name,
+                    fullName = projection.full_name,
                     team_id = projection.team_id,
                     role = projection.role,
                     picture = projection.picture,
@@ -73,6 +75,7 @@ namespace cr_app_webapi
         }
 
         [HttpPost("auth/create")]
+        [Authorize("update:roles")]
         public async Task<IActionResult> CreateAuth0User(UserObj user)
         {
             AuthUser userInAuth0 = new AuthUser
@@ -86,7 +89,8 @@ namespace cr_app_webapi
                 {
                     certifications = new List<string>(),
                     role = user.role,
-                    id = user.team_id
+                    id = user.team_id,
+                    name = new FullName(user.fname, user.lname).Name
                 }
             };
             Employee employee = new Employee
@@ -94,7 +98,7 @@ namespace cr_app_webapi
                 email = user.email,
                 fname = user.fname,
                 lname = user.lname,
-                name = new FullName(user.fname, user.lname).Name,
+                full_name = new FullName(user.fname, user.lname).Name,
                 username = user.username,
                 team_id = user.team_id,
                 role = user.role

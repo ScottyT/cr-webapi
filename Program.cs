@@ -25,7 +25,7 @@ builder.WebHost.ConfigureKestrel(options =>
 {
     var services = builder.Services;
     // Commenting this out because using this with Google API Gateway cause this app to always have unauthorized access. If use with Azure API Management this wont happen
-    /* services.AddAuthentication(options =>
+    services.AddAuthentication(options =>
     {
         options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
         options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -46,7 +46,7 @@ builder.WebHost.ConfigureKestrel(options =>
         options.AddPolicy("read:reports", policy => policy.Requirements.Add(new HasScopeRequirement("read:reports", domain)));
         options.AddPolicy("create:user", policy => policy.Requirements.Add(new HasScopeRequirement("create:user", domain)));
         options.AddPolicy("update:roles", policy => policy.Requirements.Add(new HasScopeRequirement("update:roles", domain)));
-    }); */
+    });
     // Add services to the container.
     services.Configure<CodeRedDatabaseSettings>(
         builder.Configuration.GetSection("CodeRedDatabase")
@@ -125,6 +125,8 @@ app.UseSwaggerUI(c =>
 app.UseHttpsRedirection();
 app.UseCors(MyCorsPolicy);
 app.UseRouting();
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseEndpoints(endpoints =>
 {
     endpoints.MapControllers();

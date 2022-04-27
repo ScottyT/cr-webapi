@@ -10,6 +10,7 @@ namespace cr_app_webapi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize("read:reports")]
 public class ReportsController : ControllerBase
 {
     private readonly IMongoRepo<Report, Report> _report;
@@ -33,7 +34,6 @@ public class ReportsController : ControllerBase
         _moistureMap = moistureMap;
     }
     [HttpGet]
-    [Authorize]
     public IQueryable<Report> GetAll() =>
         _report.AsQueryable();
 

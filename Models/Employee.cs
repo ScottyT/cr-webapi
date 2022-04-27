@@ -14,7 +14,7 @@ public class Employee : Document
     public string? fname { get; set; }
     public string? lname { get; set; }
     public string? email { get; set; }
-    public string? name { get; set; }
+    public string? full_name { get; set; }
     [BsonElement("id")]
     public string? team_id { get; set; }
     public string? username { get; set; }
@@ -47,6 +47,7 @@ public class UserMetadata
     public List<string> certifications { get; set; } = new List<string>();
     public string? role { get; set; }
     public string? id { get; set; }
+    public string? name {get; set;}
 }
 public class UserRoleView
 {
