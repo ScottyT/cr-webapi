@@ -99,7 +99,6 @@ namespace cr_app_webapi.Services
 
         public async Task InsertOneAsync(TDocument document)
         {
-           // return Task.Run(() => _collection.InsertOneAsync(document));
            await _collection.InsertOneAsync(document);
         }
 

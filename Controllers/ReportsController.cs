@@ -1,3 +1,4 @@
+using cr_app_webapi.Dto;
 using cr_app_webapi.Models;
 using cr_app_webapi.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -34,8 +35,13 @@ public class ReportsController : ControllerBase
         _moistureMap = moistureMap;
     }
     [HttpGet]
-    public IQueryable<Report> GetAll() =>
-        _report.AsQueryable();
+    public IEnumerable<Report> GetAll()
+    {
+        var reports = _report.FilterBy(
+            f => f.formType != "sketch-report"
+        );
+        return reports;
+    }
 
     [HttpGet("details/{reportType}/{id}")]
     public async Task<ActionResult<Object>> GetReport(string id, string reportType)
