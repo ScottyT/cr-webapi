@@ -50,11 +50,3 @@ public class AssignmentOfBenefits : Report
 }
 
 // THIS IS USED ONLY FOR AOB REPORTS and Logging reports and Moisture reports! DON'T USE IT FOR OTHER REPORTS!!
-public class Location
-{
-    public string? address { get; set; }
-    public string? city { get; set; }
-    public string? state { get; set; }
-    public string? zip { get; set; }
-    public string? cityStateZip {get; set;}
-}

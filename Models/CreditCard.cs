@@ -15,14 +15,9 @@ public class CreditCard : Document
     }
     public string? ReportType {get; set;}
 
-    [JsonConverter(typeof(DictionaryStringObjectJsonConverter))]
-    public Dictionary<string, object>? cardholderInfo {get; set;}
-
-    [JsonConverter(typeof(DictionaryStringObjectJsonConverter))]
-    public Dictionary<string, object>? billingAddressFirst {get; set;}
-
-    [JsonConverter(typeof(DictionaryStringObjectJsonConverter))]
-    public Dictionary<string, object>? billingAddressOther {get; set;}
+    public CardholderInfo? cardholderInfo {get; set;}
+    public Location billingAddressFirst {get; set;} = new Location();
+    public Location billingAddressOther {get; set;} = new Location();
     public string? creditCardCompany {get; set;}
     public string? cardholderName {get; set;}
     public string? expirationDate {get; set;}
@@ -33,4 +28,13 @@ public class CreditCard : Document
     public string cardNumber {get; set;} = default!;
     public string? customerSig {get; set;}
     public string? customerSignDate {get; set;}
+}
+
+public class CardholderInfo
+{
+    public string? first {get; set;}
+    public string? middle {get; set;}
+    public string? last {get; set;}
+    public string? email {get; set;}
+    public string? phoneNumber {get; set;}
 }
