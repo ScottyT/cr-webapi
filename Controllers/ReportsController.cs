@@ -103,7 +103,7 @@ public class ReportsController : ControllerBase
     public async Task<IActionResult> Post(Object newReport, string reportType, string jobid)
     {
         var report = _report.FilterBy(
-            filter => filter.JobId == jobid && filter.formType != "case-report" && filter.ReportType == reportType
+            filter => filter.JobId == jobid && filter.formType != "case-report" && filter.ReportType == reportType && filter.formType != "sketch-report"
         ).FirstOrDefault();
         if (report is not null)
         {

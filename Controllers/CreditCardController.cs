@@ -45,10 +45,9 @@ namespace cr_app_webapi.Controllers
         }
 
         [HttpPost("new")]
-        public async Task<IActionResult> AddNewCreditCard([FromBody] CreditCard newCard)
+        public async Task<IActionResult> AddNewCreditCard(CreditCard newCard, string cardnumber)
         {
-            string? cardnumber = newCard.cardNumber;
-            if (cardnumber is null) return BadRequest();
+            if (cardnumber is "") return BadRequest();
             var card = GetByCardNumber(cardnumber);
             if (card.Value is not null)
             {
