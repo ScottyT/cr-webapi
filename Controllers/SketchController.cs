@@ -22,6 +22,24 @@ public class SketchController : ControllerBase
     public List<Sketch> Get() =>
         _sketchRepo.AsQueryable().ToList();
 
+    [HttpGet("{jobid}")]
+    public IEnumerable<Sketch> GetByJobId(string jobid)
+    {
+        var sketches = _sketchRepo.FilterBy(
+            filter => filter.JobId == jobid,
+            p => new Sketch
+            {
+                JobId = p.JobId,
+                Title = p.Title,
+                Id = p.Id,
+                ReportType = p.ReportType,
+                sketch = p.sketch,
+                notes = p.notes
+            }
+        );
+        return (IEnumerable<Sketch>)sketches;
+    }
+
     [HttpGet("{id:length(24)}")]
     public ActionResult<SketchDTO> Get(string id)
     {
@@ -30,6 +48,7 @@ public class SketchController : ControllerBase
             p => new SketchDTO
             {
                 JobId = p.JobId,
+                Title = p.Title,
                 teamMember = p.teamMember,
                 sketch = p.sketch,
                 formType = p.formType,
