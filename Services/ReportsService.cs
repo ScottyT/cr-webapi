@@ -4,6 +4,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using cr_app_webapi.Dto;
 using cr_app_webapi.Models;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -13,49 +14,14 @@ namespace cr_app_webapi.Services
     public class ReportsService
     {
         private readonly IMongoDatabase _database;
-        private readonly IMongoCollection<AssignmentOfBenefits> _assignmentOfBenefits;
-        private readonly IMongoCollection<CertificateOfCompletion> _certificate;
         private readonly IHttpContextAccessor _contextAccessor;
-        private readonly IMongoCollection<CreditCard> _creditCard;
-        private readonly IMongoCollection<CaseFile> _caseFile;
         private readonly IMongoCollection<BsonDocument> _bsonCol;
-        private readonly IMongoCollection<InventoryImage> _imagesBson;
-        private readonly IMongoRepo<InventoryModel,InventoryModel> _image; //this might not work
 
         public ReportsService(ICodeRedDatabaseSettings settings, IMongoRepo<InventoryModel,InventoryModel> image)
         {
             _database = new MongoClient(settings.ConnectionString).GetDatabase(settings.DatabaseName);
-            _creditCard = _database.GetCollection<CreditCard>("credit-cards");
-            _caseFile = _database.GetCollection<CaseFile>("reports");
-            _certificate = _database.GetCollection<CertificateOfCompletion>("reports");
-            _assignmentOfBenefits = _database.GetCollection<AssignmentOfBenefits>("reports");
             _contextAccessor = new HttpContextAccessor();
             _bsonCol = _database.GetCollection<BsonDocument>("reports");
-            _imagesBson = _database.GetCollection<InventoryImage>("inventory.images");
-            _image = image;
-        }
-
-        public async Task CreateReport(string reportType, string report)
-        {
-            if (report is "" && reportType is "")
-            {
-                return;
-            }
-            var time = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
-
-            var bsonConvert = BsonDocument.Parse(report);
-            bsonConvert.Add("createdAt", time);
-            bsonConvert.Add("updatedAt", time);
-            await _bsonCol.InsertOneAsync(bsonConvert);
-        }
-
-        public async Task<Object?> GetReport(string id, string reportType)
-        {
-            var reportCollection = _database.GetCollection<Report>("reports");
-            var projectionBuilder = Builders<Report>.Projection.Exclude(doc => doc.createdAt);
-            var report = await reportCollection.Find(r => r.JobId == id && r.ReportType == reportType).As<Object>().FirstOrDefaultAsync();
-            
-            return report;
         }
 
         // Also used to create chart

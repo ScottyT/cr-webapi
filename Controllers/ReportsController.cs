@@ -1,3 +1,4 @@
+using cr_app_webapi.Dto;
 using cr_app_webapi.Models;
 using cr_app_webapi.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -14,6 +15,7 @@ namespace cr_app_webapi.Controllers;
 public class ReportsController : ControllerBase
 {
     private readonly IMongoRepo<Report, Report> _report;
+    private readonly IMongoRepo<Sketch, Sketch> _sketches;
     private readonly ReportsService _reportsService;
     private readonly IMongoRepo<CertificateOfCompletion, CreditCard> _coc;
     private readonly IMongoRepo<AssignmentOfBenefits, CreditCard> _aob;
@@ -23,7 +25,7 @@ public class ReportsController : ControllerBase
 
     public ReportsController(IMongoRepo<Report, Report> mongoReport, ReportsService reportsService, IMongoRepo<CertificateOfCompletion, CreditCard> coc,
         IMongoRepo<AssignmentOfBenefits, CreditCard> aob, IMongoRepo<InventoryModel, InventoryImage> contentInventory, IMongoRepo<Logging, Logging> logging,
-        IMongoRepo<MoistureModel, MoistureModel> moistureMap)
+        IMongoRepo<MoistureModel, MoistureModel> moistureMap, IMongoRepo<Sketch, Sketch> sketches)
     {
         _report = mongoReport;
         _reportsService = reportsService;
@@ -32,15 +34,30 @@ public class ReportsController : ControllerBase
         _contentInventory = contentInventory;
         _logging = logging;
         _moistureMap = moistureMap;
+        _sketches = sketches;
     }
     [HttpGet]
-    public IQueryable<Report> GetAll() =>
-        _report.AsQueryable();
+    public IEnumerable<Report> GetAll()
+    {
+        var reports = _report.FilterBy(
+            f => f.formType != "sketch-report"
+        ).ToList();
+        var sketches = _sketches.AsQueryable().ToList();
+        ResultsDTO res = new ResultsDTO()
+        {
+            Reports = reports,
+            Sketches = sketches
+        };
+        return reports;
+    }
 
     [HttpGet("details/{reportType}/{id}")]
-    public async Task<ActionResult<Object>> GetReport(string id, string reportType)
+    public ActionResult<Object> GetReport(string id, string reportType)
     {
-        var report = await _reportsService.GetReport(id, reportType);
+        var report = _report.FilterBy<Object>(
+            f => f.JobId == id && f.ReportType == reportType,
+            p => new { p }
+        ).AsQueryable<Object>().FirstOrDefault();
         if (reportType == "personal-content-inventory")
         {
             report = _contentInventory.FindAndJoin<InventoryModel>(
@@ -111,7 +128,8 @@ public class ReportsController : ControllerBase
         }
 
         var createdReport = JsonSerializer.Serialize(newReport);
-        await _reportsService.CreateReport(reportType, createdReport);
+        //await _reportsService.CreateReport(reportType, createdReport);
+        await _report.BsonSaveOneAsync(createdReport);
 
         return CreatedAtAction(nameof(GetAll), "Successfully created report!");
     }

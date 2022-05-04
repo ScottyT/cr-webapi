@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using cr_app_webapi.Dto;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
@@ -19,7 +20,7 @@ public interface IMongoRepo<TDocument, TForeign> where TDocument : IDocument, ne
     );
     Task<TDocument> GetOneAsync(string id);
     //Task<TDocument> GetManyAsync(IEnumerable<string> ids);
-    Task SaveOneAsync(string json);
+    Task BsonSaveOneAsync(string json);
     Task BsonFindOneAndUpdate(string jobid, string reportType, string json, bool upsert);
     Task InsertOneAsync(TDocument document); // This method is just like SaveOneAsync except in takes a generic as a parameter
 

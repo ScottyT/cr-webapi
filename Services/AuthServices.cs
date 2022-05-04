@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text.Json;
+using cr_app_webapi.Dto;
 using cr_app_webapi.Models;
 using Microsoft.Extensions.Options;
 using RestSharp;
@@ -55,9 +56,9 @@ namespace cr_app_webapi.Services
     
         public async Task<RestResponse> GetUser(string userid)
         {
-            var user = _userRepo.FilterBy(
+            var user = _userRepo.FilterBy<EmployeeDTO>(
                 filter => filter.auth_id == userid,
-                project => new
+                project => new EmployeeDTO
                 {
                     email = project.email,
                     fullName = project.full_name,

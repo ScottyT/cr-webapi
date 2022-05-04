@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using cr_app_webapi.Dto;
 using cr_app_webapi.Models;
 using cr_app_webapi.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -44,9 +45,9 @@ namespace cr_app_webapi
         [HttpGet("{email}")]
         public ActionResult<Object> GetUser(string email, string id)
         {
-            var user = _userRepo.FilterBy(
+            var user = _userRepo.FilterBy<EmployeeDTO>(
                 filter => filter.email == email,
-                projection => new
+                projection => new EmployeeDTO
                 {
                     email = projection.email,
                     fullName = projection.full_name,
