@@ -33,8 +33,7 @@ public class CertificationsController : ControllerBase
     [HttpPost("create")]
     public async Task<IActionResult> Post(Certification cert)
     {
-        var jsonstring = JsonSerializer.Serialize(cert);
-        await _certification.SaveOneAsync(jsonstring);
+        await _certification.InsertOneAsync(cert);
         return CreatedAtAction(nameof(Get), new { _id = cert.Id }, "Successfully created certification!");
     }
 }

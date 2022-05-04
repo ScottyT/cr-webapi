@@ -37,7 +37,7 @@ public class SketchController : ControllerBase
                 notes = p.notes
             }
         );
-        return (IEnumerable<Sketch>)sketches;
+        return sketches;
     }
 
     [HttpGet("{id:length(24)}")]
@@ -49,7 +49,6 @@ public class SketchController : ControllerBase
             {
                 JobId = p.JobId,
                 Title = p.Title,
-                teamMember = p.teamMember,
                 sketch = p.sketch,
                 formType = p.formType,
                 ReportType = p.ReportType,

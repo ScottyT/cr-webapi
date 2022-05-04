@@ -8,7 +8,6 @@ public class SketchDTO
     public string? Title {get; set;}
     public string ReportType { get; set; } = default!;
     public string? formType { get; set; }
-    public TeamMember teamMember { get; set; } = new TeamMember();
     public string? sketch {get; set;}
     public string? notes {get; set;}
 }

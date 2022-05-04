@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text.Json;
+using cr_app_webapi.Dto;
 using cr_app_webapi.Models;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -44,7 +45,7 @@ namespace cr_app_webapi.Services
         public IEnumerable<TProjected> FilterBy<TProjected>(Expression<Func<TDocument, bool>> filterExpression, 
             Expression<Func<TDocument, TProjected>> projectionExpression)
         {
-            return _collection.Find(filterExpression).Project(projectionExpression).ToEnumerable();
+            return _collection.Find(filterExpression).Project(projectionExpression).As<TProjected>().ToEnumerable();
         }
         
         public IEnumerable<TProjected> FindAndJoin<TProjected>(Expression<Func<TDocument, bool>> matchExpression, 
@@ -85,16 +86,13 @@ namespace cr_app_webapi.Services
             await _bsonCol.FindOneAndUpdateAsync(filter, update, updateOptions);
         }
 
-        public virtual Task SaveOneAsync(string json)
+        public virtual async Task BsonSaveOneAsync(string json)
         {
             var time = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
-            TDocument? doc = JsonSerializer.Deserialize<TDocument>(json);
-            if (!ValidExtensions.IsValid<TDocument>(doc))
-            {
-                return Task.Run(() => "There is an error with the data.");
-            }
-            doc.updatedAt = time;
-            return Task.Run(() =>  _collection.InsertOneAsync(doc));
+            var doc = BsonDocument.Parse(json);
+            doc.Add("createdAt", time);
+            doc.Add("updatedAt", time);
+            await _bsonCol.InsertOneAsync(doc);
         }
 
         public async Task InsertOneAsync(TDocument document)

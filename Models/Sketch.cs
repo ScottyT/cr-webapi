@@ -4,10 +4,13 @@ namespace cr_app_webapi.Models;
 
 [BsonIgnoreExtraElements]
 [BsonCollection("sketches")]
-public class Sketch : Report
+public class Sketch : Document
 {
-    public string? sketch {get; set;}
+    public string JobId { get; set; } = null!;
+    public string ReportType { get; set; } = default!;
+    public string? formType { get; set; }
+    public string? sketch { get; set; }
     [BsonElement("title")]
-    public string? Title {get; set;}
-    public string? notes {get; set;}
+    public string? Title { get; set; }
+    public string? notes { get; set; }
 }
