@@ -6,6 +6,11 @@ namespace cr_app_webapi.Models;
 [BsonCollection("sketches")]
 public class Sketch : Document
 {
+    public Sketch()
+    {
+        createdAt = DateTime.UtcNow;
+        updatedAt = DateTime.UtcNow;
+    }
     public string JobId { get; set; } = null!;
     public string ReportType { get; set; } = default!;
     public string? formType { get; set; }

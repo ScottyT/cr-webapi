@@ -48,7 +48,7 @@ public class SketchController : ControllerBase
             p => new SketchDTO
             {
                 JobId = p.JobId,
-                Title = p.Title,
+                title = p.Title,
                 sketch = p.sketch,
                 formType = p.formType,
                 ReportType = p.ReportType,

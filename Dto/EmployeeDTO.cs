@@ -7,6 +7,7 @@ public class EmployeeDTO
 {
     public string? email {get; set;}
     public string? fullName {get; set;}
+    [BsonElement("id")]
     public string? team_id {get; set;}
     public string? role {get; set;}
     public string? picture {get; set;}

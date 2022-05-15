@@ -22,10 +22,11 @@ public class ReportsController : ControllerBase
     private readonly IMongoRepo<InventoryModel, InventoryImage> _contentInventory;
     private readonly IMongoRepo<Logging, Logging> _logging;
     private readonly IMongoRepo<MoistureModel, MoistureModel> _moistureMap;
+    private readonly IMongoRepo<PsychrometricDto, Psychrometric> _psy;
 
     public ReportsController(IMongoRepo<Report, Report> mongoReport, ReportsService reportsService, IMongoRepo<CertificateOfCompletion, CreditCard> coc,
         IMongoRepo<AssignmentOfBenefits, CreditCard> aob, IMongoRepo<InventoryModel, InventoryImage> contentInventory, IMongoRepo<Logging, Logging> logging,
-        IMongoRepo<MoistureModel, MoistureModel> moistureMap, IMongoRepo<Sketch, Sketch> sketches)
+        IMongoRepo<MoistureModel, MoistureModel> moistureMap, IMongoRepo<Sketch, Sketch> sketches, IMongoRepo<PsychrometricDto, Psychrometric> psy)
     {
         _report = mongoReport;
         _reportsService = reportsService;
@@ -35,6 +36,7 @@ public class ReportsController : ControllerBase
         _logging = logging;
         _moistureMap = moistureMap;
         _sketches = sketches;
+        _psy = psy;
     }
     [HttpGet]
     public IEnumerable<Report> GetAll()
@@ -124,7 +126,7 @@ public class ReportsController : ControllerBase
         ).FirstOrDefault();
         if (report is not null)
         {
-            return Ok(new { error = true, message = "A report of this type and job id already exsits." });
+            return Conflict(new { error = true, message = "A report of this type and job id already exsits." });
         }
 
         var createdReport = JsonSerializer.Serialize(newReport);
@@ -138,6 +140,10 @@ public class ReportsController : ControllerBase
     // Only used for the inventory-logs, and atmospheric-readings, and personal-content-inventory and moisture-map
     public async Task<IActionResult> ReportsThatGetUpdated(Object updatedReport, string id, string reportType)
     {
+        if (updatedReport is null)
+        {
+            return BadRequest(new { message = "Something bad happened" });
+        }
         var reportBody = JsonSerializer.Serialize(updatedReport);
         await _contentInventory.BsonFindOneAndUpdate(id, reportType, reportBody, true);
 
@@ -147,16 +153,53 @@ public class ReportsController : ControllerBase
     [HttpPost("psychrometric-chart/update-chart")]
     public async Task<IActionResult> CreatePsychrometric(Psychrometric report)
     {
-        var r = JsonSerializer.Serialize(report);
-        await _reportsService.UpdatePsychrometricChart(r, report, "new");
-        return CreatedAtAction(nameof(GetAll), "Psychrometric chart saved successfully!");
+        /* var r = JsonSerializer.Serialize(report);
+        await _reportsService.UpdatePsychrometricChart(r, report, "new"); */
+        var JobProgress = report.jobProgress;
+        var dto = new PsychrometricDto()
+        {
+            JobId = report.JobId,
+            ReportType = report.ReportType,
+            formType = report.formType,
+            jobProgress = new List<JobProgress>()
+            {
+                JobProgress
+            }
+        };
+        await _psy.GenericFindOneUpdate<PsychrometricDto>(
+            f => f.JobId == report.JobId && f.ReportType == report.ReportType && f.formType == report.formType,
+            dto, upsert: true, action: "new", setArrUpdate: Builders<PsychrometricDto>.Update.Push("jobProgress", JobProgress)
+        );
+        return CreatedAtAction(nameof(GetAll), "Psychrometric chart has been created!");
     }
 
     [HttpPost("psychrometric-chart/update-progress")]
     public async Task<IActionResult> UpdatePsychrometric(Psychrometric report)
     {
-        var r = JsonSerializer.Serialize(report);
-        await _reportsService.UpdatePsychrometricChart(r, report, "update");
+        var JobProgress = report.jobProgress;
+        var arrayFilter = new [] {
+            /* new BsonDocumentArrayFilterDefinition<BsonDocument>(
+                new BsonDocument("j.readingsType", new BsonDocument("$eq", JobProgress!.readingsType))
+            ), */
+            new BsonDocumentArrayFilterDefinition <BsonDocument> (
+                new BsonDocument("j.date", new BsonDocument("$in", new BsonArray(new [] { JobProgress!.date }))
+            ))
+        };
+        var dto = new PsychrometricDto()
+        {
+            JobId = report.JobId,
+            ReportType = report.ReportType,
+            formType = report.formType,
+            jobProgress = new List<JobProgress>()
+            {
+                JobProgress
+            }
+        };
+        await _psy.GenericFindOneUpdate<Psychrometric>(
+            f => f.JobId == report.JobId && f.ReportType == report.ReportType && f.formType == report.formType,
+            dto, upsert: false, action: "update", arrFilter: arrayFilter,
+            setArrUpdate: Builders<PsychrometricDto>.Update.Set("jobProgress.$[j]", JobProgress));
+        
         return CreatedAtAction(nameof(GetAll), "Psychrometric chart updated successfully!");
     }
     
