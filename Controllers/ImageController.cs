@@ -1,3 +1,4 @@
+using cr_app_webapi.Dto;
 using cr_app_webapi.Models;
 using cr_app_webapi.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -13,34 +14,37 @@ namespace cr_app_webapi.Controllers
     [Route("api/image")]
     public class ImageController : ControllerBase
     {
-        private readonly IMongoRepo<InventoryImage, InventoryImage> _image;
+        private readonly IMongoRepo<InventoryImage, InventoryImage> _inventoryImage;
         private AuthServices _authService;
-        public ImageController(IMongoRepo<InventoryImage, InventoryImage> image, AuthServices authServices)
+        public ImageController(IMongoRepo<InventoryImage, InventoryImage> inventoryImage, AuthServices authServices)
         {
-            _image = image;
+            _inventoryImage = inventoryImage;
             _authService = authServices;
         }
 
-        [HttpGet("inventory")]
+        [HttpGet("images")]
         public List<InventoryImage> GetAll()
         {
-            return _image.AsQueryable().ToList();
+            return _inventoryImage.AsQueryable().ToList();
         }
 
-        /* [HttpGet("inventory/{jobid}")]
-        public ActionResult<List<FileModel>> GetByJobId(string jobid)
+        [HttpGet("{id:length(24)}")]
+        public ActionResult<ImageDTO> GetImage(string id)
         {
-            var images = _image.FilterBy(
-                filter => filter.JobId == jobid,
-                project => project.img
-            ).ToList();
-            if (images.Count <= 0 && !ValidExtensions.IsValid<FileModel>(images[0]))
+            var image = _inventoryImage.FilterBy<ImageDTO>(
+                filter => filter.Id == id,
+                project => new ImageDTO()
+                {
+                    data = project.img!.data,
+                    extension = project.img.contentType
+                }
+            ).FirstOrDefault();
+            if (image is null)
             {
                 return NotFound();
             }
-            
-            return images;
-        } */
+            return image;
+        }
 
         [HttpPost("upload/content-inventory-image")]
         public async Task<IActionResult> UploadImage([FromForm] InventoryImage? data)
@@ -56,6 +60,11 @@ namespace cr_app_webapi.Controllers
             var ogName = Path.GetFileName(image.FileName);
             var extensionType = image.ContentType.Split('/')[1];
             var filePath = Path.Combine("Uploads", "img");
+            var fileDir = Path.GetFullPath("Uploads");
+            if (!Directory.Exists(fileDir))
+            {
+                DirectoryInfo di = Directory.CreateDirectory(fileDir);
+            }
             using (var stream = System.IO.File.Create(filePath))
             {
                 await image.CopyToAsync(stream);
@@ -77,8 +86,12 @@ namespace cr_app_webapi.Controllers
                 ItemNumber = data.ItemNumber
             };
 
-            Task task = _image.InsertOneAsync(formData);
-            task.Wait();
+            /* Task task = _image.InsertOneAsync(formData);
+            task.Wait(); */
+            await _inventoryImage.GenericFindOneUpdate<InventoryImage>(
+                f => f.ItemNumber == data.ItemNumber && f.JobId == data.JobId,
+                formData, upsert: true
+            );
 
             return CreatedAtAction(nameof(GetAll), new { id = formData.Id }, formData.Id);
         }
@@ -86,13 +99,13 @@ namespace cr_app_webapi.Controllers
         [HttpDelete("{id:length(24)}")]
         public async Task<IActionResult> Delete(string id)
         {
-            var image = _image.FilterBy(f => f.Id == id).FirstOrDefault();
+            var image = _inventoryImage.FilterBy(f => f.Id == id).FirstOrDefault();
             if (image is null)
             {
                 return NotFound();
             }
 
-            await _image.DeleteByIdAsync(f => f.Id == id);
+            await _inventoryImage.DeleteByIdAsync(f => f.Id == id);
             return NoContent();
         }
     }

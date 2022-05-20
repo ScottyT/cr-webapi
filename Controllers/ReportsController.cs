@@ -79,42 +79,27 @@ public class ReportsController : ControllerBase
                 f => f.JobId == id && f.ReportType == reportType
             ).Cast<object>().FirstOrDefault();
         }
+        if (reportType.Contains("aob"))
+        {
+            report = _aob.FindAndJoin<AssignmentOfBenefits>(
+                f => f.JobId == id && f.ReportType == reportType,
+                l => l.cardNumber, foreign => foreign.cardNumber,
+                j => j.creditCard
+            ).Cast<object>().FirstOrDefault();
+        }
+        if (reportType.Contains("coc"))
+        {
+            report = _coc.FindAndJoin<CertificateOfCompletion>(
+                f => f.JobId == id && f.ReportType == reportType,
+                l => l.cardNumber, foreign => foreign.cardNumber,
+                j => j.creditCard
+            ).Cast<object>().FirstOrDefault();
+        }
         if (report is null)
         {
             return NotFound();
         }
     
-        return report;
-    }
-
-    [HttpGet("{reportType}/{id}/aob")]
-    public ActionResult<AssignmentOfBenefits> GetAobReport(string id, string reportType)
-    {
-        var report = _aob.FindAndJoin<AssignmentOfBenefits>(
-            f => f.JobId == id && f.ReportType == reportType,
-            l => l.cardNumber, foreign => foreign.cardNumber,
-            j => j.creditCard
-        ).FirstOrDefault();
-        if (report is null)
-        {
-            return NotFound("No report found of this job id");
-        }
-
-        return report;
-    }
-
-    [HttpGet("{reportType}/{id}/certificate")]
-    public ActionResult<CertificateOfCompletion> GetCertReport(string id, string reportType)
-    {
-        var report = _coc.FindAndJoin<CertificateOfCompletion>(
-            f => f.JobId == id && f.ReportType == reportType,
-            x => x.cardNumber, y => y.cardNumber, x => x.creditCard
-        ).FirstOrDefault();
-        if (report is null)
-        {
-            return NotFound("No report found of this job id");
-        }
-
         return report;
     }
 
@@ -147,14 +132,12 @@ public class ReportsController : ControllerBase
         var reportBody = JsonSerializer.Serialize(updatedReport);
         await _contentInventory.BsonFindOneAndUpdate(id, reportType, reportBody, true);
 
-        return Ok("Successfully submitted the report!");
+        return Ok(new { message = "Successfully submitted the report!", result = updatedReport });
     }
 
     [HttpPost("psychrometric-chart/update-chart")]
     public async Task<IActionResult> CreatePsychrometric(Psychrometric report)
     {
-        /* var r = JsonSerializer.Serialize(report);
-        await _reportsService.UpdatePsychrometricChart(r, report, "new"); */
         var JobProgress = report.jobProgress;
         var dto = new PsychrometricDto()
         {

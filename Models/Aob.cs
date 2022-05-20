@@ -8,6 +8,7 @@ namespace cr_app_webapi.Models;
 public class AssignmentOfBenefits : Report
 {
     public string? contractingCompany { get; set; }
+    public string? companyAbbreviation {get; set;}
     public string? subjectProperty { get; set; }
     public string? cusSign1 { get; set; }
     public string? cusSignDate1 { get; set; }
@@ -20,9 +21,9 @@ public class AssignmentOfBenefits : Report
     public string? initial7 { get; set; }
     public string? initial8 { get; set; }
     public string? insuredTermEndDate { get; set; }
-    public int? insuredPay1 { get; set; }
+    public double? insuredPay1 { get; set; }
     public string? insuredPayDay1 { get; set; }
-    public int? insuredPay2 { get; set; }
+    public double? insuredPay2 { get; set; }
     public string? insuredPayDay5 { get; set; }
     public string? nonInsuredTermEndDate { get; set; }
     public string? nonInsuredDay1 { get; set; }

@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using cr_app_webapi.Services;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace cr_app_webapi
 {
@@ -34,15 +35,13 @@ namespace cr_app_webapi
                     throw new JsonException("Failed to get property name");
                 }
 
-                object? value = ExtractValue(ref reader, options);
-                
-                if (!ValidExtensions.IsValid<object>(value))
+                /* if (!ValidExtensions.IsValid<object>(value))
                 {
                     throw new JsonException("Value is not valid");
-                }
+                } */
 
                 reader.Read();
-                dictionary.Add(propertyName, value);
+                dictionary.Add(propertyName, ExtractValue(ref reader, options));
             }
 
             return dictionary;
@@ -85,11 +84,10 @@ namespace cr_app_webapi
                     var list = new List<object>();
                     while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
                     {
-                        object? item = ExtractValue(ref reader, options);
-                        list.Add(item!);
+                        list.Add(ExtractValue(ref reader, options));
                     }
                     return list;
-                
+
                 default:
                     throw new JsonException($"'{reader.TokenType}' is not supported");
             }
@@ -116,5 +114,43 @@ namespace cr_app_webapi
             object objectToWrite,
             JsonSerializerOptions options) =>
             JsonSerializer.Serialize(writer, objectToWrite, objectToWrite.GetType(), options);
+    }
+    public class DictionaryObjectJsonModelBinder : IModelBinder
+    {
+        private readonly ILogger<DictionaryObjectJsonModelBinder> _logger;
+
+        private static readonly JsonSerializerOptions DefaultJsonSerializerOptions = new JsonSerializerOptions(JsonSerializerDefaults.General)
+        {
+            Converters = { new DictionaryStringObjectJsonConverter() }
+        };
+
+        public DictionaryObjectJsonModelBinder(ILogger<DictionaryObjectJsonModelBinder> logger)
+        {
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        }
+
+        public async Task BindModelAsync(ModelBindingContext bindingContext)
+        {
+            if (bindingContext == null)
+            {
+                throw new ArgumentNullException(nameof(bindingContext));
+            }
+
+            if (bindingContext.ModelType != typeof(Dictionary<string, object>))
+            {
+                throw new NotSupportedException($"The '{nameof(DictionaryObjectJsonModelBinder)}' model binder should only be used on Dictionary<string, object>, it will not work on '{bindingContext.ModelType.Name}'");
+            }
+
+            try
+            {
+                var data = await JsonSerializer.DeserializeAsync<Dictionary<string, object>>(bindingContext.HttpContext.Request.Body, DefaultJsonSerializerOptions);
+                bindingContext.Result = ModelBindingResult.Success(data);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Error when trying to model bind Dictionary<string, object>");
+                bindingContext.Result = ModelBindingResult.Failed();
+            }
+        }
     }
 }

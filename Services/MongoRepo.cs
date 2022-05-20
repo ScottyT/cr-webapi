@@ -70,7 +70,7 @@ namespace cr_app_webapi.Services
             var time = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
             BsonDocument doc = BsonDocument.Parse(json);
             var filter = Builders<BsonDocument>.Filter.Eq("JobId", jobid) & Builders<BsonDocument>.Filter.Eq("ReportType", reportType);
-            var updateOptions = new FindOneAndUpdateOptions<BsonDocument> { IsUpsert = upsert };
+            var updateOptions = new FindOneAndUpdateOptions<BsonDocument> { IsUpsert = upsert, ReturnDocument = ReturnDocument.After };
             var updateDef = new List<UpdateDefinition<BsonDocument>>();
             var existingReport = await _bsonCol.Find(filter).FirstOrDefaultAsync();
             if (existingReport is null)
@@ -128,7 +128,7 @@ namespace cr_app_webapi.Services
             }
 
             updateDefList.Add(Builders<TDocument>.Update.Set("updatedAt", time));
-            var updateOptions = new FindOneAndUpdateOptions<TDocument, TProjected> { IsUpsert = upsert };
+            var updateOptions = new FindOneAndUpdateOptions<TDocument, TProjected> { IsUpsert = upsert, ReturnDocument = ReturnDocument.After };
             var update = Builders<TDocument>.Update.Combine(updateDefList);
             switch(action)
             {
@@ -146,8 +146,6 @@ namespace cr_app_webapi.Services
                     await _collection.FindOneAndUpdateAsync<TProjected>(filter, update, updateOptions);
                     break;
             }
-            
-            //return Task.Run(() => _collection.FindOneAndUpdateAsync<TProjected>(filter, update, updateOptions));
         }
 
         public void DeleteById(string id)

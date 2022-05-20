@@ -7,6 +7,8 @@ namespace cr_app_webapi.Models;
 [BsonCollection("reports")]
 public class CertificateOfCompletion : Report
 {
+    public string? contractingCompany { get; set; }
+    public string? companyAbbreviation {get; set;}
     public string? subjectProperty {get; set;}
     public string? deductible {get; set;}
     public string? insuredMinEndDate {get; set;}
