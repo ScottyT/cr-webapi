@@ -10,6 +10,7 @@ public class AssignmentOfBenefits : Report
     public string? contractingCompany { get; set; }
     public string? companyAbbreviation {get; set;}
     public string? subjectProperty { get; set; }
+    public double? deductible {get; set;}
     public string? cusSign1 { get; set; }
     public string? cusSignDate1 { get; set; }
     public string? initial1 { get; set; }
