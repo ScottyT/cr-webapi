@@ -1,14 +1,10 @@
 using System.Net;
 using System.Security.Claims;
-using System.Text.Json.Serialization;
-using cr_app_webapi;
-using cr_app_webapi.Helpers;
 using cr_app_webapi.Models;
 using cr_app_webapi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
@@ -53,9 +49,6 @@ builder.WebHost.ConfigureKestrel(options =>
     );
     services.Configure<Auth0Settings>(
         builder.Configuration.GetSection("Auth0")
-    );
-    services.Configure<AppSettings>(
-        builder.Configuration.GetSection("AppSettings")
     );
     services.AddScoped(typeof(IMongoRepo<,>), typeof(MongoRepo<,>));
     services.AddTransient<AuthServices>();
