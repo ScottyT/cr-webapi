@@ -107,7 +107,8 @@ public class ReportsController : ControllerBase
     public async Task<IActionResult> Post(Object newReport, string reportType, string jobid)
     {
         var report = _report.FilterBy(
-            filter => filter.JobId == jobid && filter.formType != "case-report" && filter.ReportType == reportType && filter.formType != "sketch-report"
+            filter => filter.JobId == jobid && filter.formType != "case-report" && filter.ReportType == reportType && filter.formType != "sketch-report" &&
+            filter.formType == "aob" && filter.formType == "coc" && filter.formType == "contracting-agreement" && filter.formType == "scope-of-work"
         ).FirstOrDefault();
         if (report is not null)
         {
@@ -115,7 +116,6 @@ public class ReportsController : ControllerBase
         }
 
         var createdReport = JsonSerializer.Serialize(newReport);
-        //await _reportsService.CreateReport(reportType, createdReport);
         await _report.BsonSaveOneAsync(createdReport);
 
         return CreatedAtAction(nameof(GetAll), "Successfully created report!");
@@ -130,7 +130,7 @@ public class ReportsController : ControllerBase
             return BadRequest(new { message = "Something bad happened" });
         }
         var reportBody = JsonSerializer.Serialize(updatedReport);
-        await _contentInventory.BsonFindOneAndUpdate(id, reportType, reportBody, true);
+        await _report.BsonFindOneAndUpdate(id, reportType, reportBody, true);
 
         return Ok(new { message = "Successfully submitted the report!", result = updatedReport });
     }
@@ -161,9 +161,6 @@ public class ReportsController : ControllerBase
     {
         var JobProgress = report.jobProgress;
         var arrayFilter = new [] {
-            /* new BsonDocumentArrayFilterDefinition<BsonDocument>(
-                new BsonDocument("j.readingsType", new BsonDocument("$eq", JobProgress!.readingsType))
-            ), */
             new BsonDocumentArrayFilterDefinition <BsonDocument> (
                 new BsonDocument("j.date", new BsonDocument("$in", new BsonArray(new [] { JobProgress!.date }))
             ))
