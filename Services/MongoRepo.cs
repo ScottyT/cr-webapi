@@ -101,12 +101,15 @@ namespace cr_app_webapi.Services
         }
 
         public virtual async Task GenericFindOneUpdate<TProjected>(
-            Expression<Func<TDocument, bool>> filter, TDocument document, bool upsert = false, bool project = false,
-            string action = "", BsonDocumentArrayFilterDefinition<BsonDocument>[]? arrFilter = null, UpdateDefinition<TDocument>? setArrUpdate = null)
+            Expression<Func<TDocument, bool>> filter, TDocument document, 
+            BsonDocumentArrayFilterDefinition<BsonDocument>[]? arrFilter = null, 
+            UpdateDefinition<TDocument>? setArrUpdate = null, 
+            bool upsert = false, string action = "")
         {
             var time = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
             var existingReport = _collection.Find(filter).FirstOrDefault();
             var updateDefList = new List<UpdateDefinition<TDocument>>();
+            var projectionBuilder = new List<ProjectionDefinition<TDocument, TProjected>>();
             if (existingReport is null)
             {
                 updateDefList.Add(Builders<TDocument>.Update.Set("createdAt", time));
@@ -128,7 +131,9 @@ namespace cr_app_webapi.Services
             }
 
             updateDefList.Add(Builders<TDocument>.Update.Set("updatedAt", time));
-            var updateOptions = new FindOneAndUpdateOptions<TDocument, TProjected> { IsUpsert = upsert, ReturnDocument = ReturnDocument.After };
+            var updateOptions = new FindOneAndUpdateOptions<TDocument, TProjected> { 
+                IsUpsert = upsert, ReturnDocument = ReturnDocument.After
+            };
             var update = Builders<TDocument>.Update.Combine(updateDefList);
             switch(action)
             {
@@ -140,10 +145,13 @@ namespace cr_app_webapi.Services
                 case "update":
                     updateDefList.Add(setArrUpdate!);
                     update = Builders<TDocument>.Update.Combine(updateDefList);
-                    await _collection.UpdateOneAsync(filter, update, new UpdateOptions{ArrayFilters = arrFilter});
+                    await _collection.FindOneAndUpdateAsync(filter, update, 
+                        new FindOneAndUpdateOptions<TDocument, TProjected>{ArrayFilters = arrFilter}
+                    );
                     break;
                 default:
-                    await _collection.FindOneAndUpdateAsync<TProjected>(filter, update, updateOptions);
+                    update = Builders<TDocument>.Update.Combine(updateDefList);
+                    await _collection.FindOneAndUpdateAsync(filter, update, updateOptions);
                     break;
             }
         }

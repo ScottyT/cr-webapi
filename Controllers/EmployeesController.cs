@@ -71,7 +71,7 @@ namespace cr_app_webapi
         {
             await _authService.UpdateUser(emp, id);
             await _userRepo.GenericFindOneUpdate<Employee>(
-                f => f.auth_id == id, emp, true
+                f => f.auth_id == id, emp, upsert: true
             );
         }
 
