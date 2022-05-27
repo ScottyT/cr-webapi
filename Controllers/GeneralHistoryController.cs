@@ -34,7 +34,8 @@ public class GeneralHistoryController : ControllerBase
                 payments = project.payments,
                 startOfJob = project.startOfJob,
                 endOfJob = project.endOfJob,
-                emailSentDate = project.emailSentDate
+                initialEmailSentDate = project.initialEmailSentDate,
+                logs = project.logs
             }
         ).FirstOrDefault();
         if (log is null)

@@ -12,7 +12,7 @@ public class GeneralHistory : Document
         updatedAt = DateTime.UtcNow;
     }
     public string? JobId {get; set;}
-    public string? ReportType { get{ return "GeneralHistory"; } }
+    public string? ReportType { get; set; } = "GeneralHistory";
     public string? customerFirstName {get; set;}
     public string? customerLastName {get; set;}
     public string? customerPhoneNumber {get; set;}
@@ -27,13 +27,23 @@ public class GeneralHistory : Document
     public List<PaymentArray> payments {get; set;} = new List<PaymentArray>();
     public string? startOfJob {get; set;}
     public string? endOfJob {get; set;}
-    public string? emailSentDate {get; set;}
+    public string? initialEmailSentDate {get; set;}
+    public List<LogsArray> logs {get; set;} = new List<LogsArray>();
 }
-
 public class PaymentArray
 {
     public string? paymentType {get; set;}
-    public string? amount {get; set;}
+    public double? amount {get ;set;}
     public string? date {get; set;}
     public string? keyNotes {get; set;}
+}
+public class LogsArray
+{
+    public string? date {get; set;}
+    public string? time {get; set;}
+    public string? typeOfCommunication {get; set;}
+    public string? codeRedRepsName {get; set;}
+    public string? communicationWith {get; set;}
+    public string? summaryNotes {get; set;}
+    public string? communicationRecords {get; set;}
 }
