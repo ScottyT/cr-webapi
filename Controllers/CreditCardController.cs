@@ -45,7 +45,7 @@ namespace cr_app_webapi.Controllers
         }
 
         [HttpPost("new")]
-        public async Task<IActionResult> AddNewCreditCard(CreditCard newCard, string cardnumber)
+        public IActionResult AddNewCreditCard(CreditCard newCard, string cardnumber)
         {
             if (cardnumber is "") return BadRequest();
             var card = GetByCardNumber(cardnumber);
@@ -54,7 +54,7 @@ namespace cr_app_webapi.Controllers
                 return Ok(new {error = true, message = "Duplicate card numbers are not allowed."});
             }
             
-            await _creditCard.InsertOneAsync(newCard);
+            var result = _creditCard.InsertOneAsync(f => f.Id == newCard.Id, newCard);
             return CreatedAtAction(nameof(Get), "Successfully created the credit card!");
         }
     }

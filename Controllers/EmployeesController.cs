@@ -16,10 +16,10 @@ namespace cr_app_webapi
     public class EmployeesController : ControllerBase
     {
         private AuthServices _authService;
-        private readonly IMongoRepo<Employee, Employee> _userRepo;
+        private readonly IMongoRepo<Employee, Certification> _userRepo;
         private readonly IHttpContextAccessor _contextAccessor;
 
-        public EmployeesController(AuthServices authService, IMongoRepo<Employee, Employee> userRepo)
+        public EmployeesController(AuthServices authService, IMongoRepo<Employee, Certification> userRepo)
         {
             _userRepo = userRepo;
             _authService = authService;
@@ -45,18 +45,18 @@ namespace cr_app_webapi
         [HttpGet("{email}")]
         public ActionResult<Object> GetUser(string email, string id)
         {
-            var user = _userRepo.FilterBy<EmployeeDTO>(
-                filter => filter.email == email,
-                projection => new EmployeeDTO
+            var user = _userRepo.FindAndJoin<EmployeeDTO>(
+                filter => filter.auth_id == id, l => l.auth_id, f => f.teamMemberAuthId, j => j.certifications,
+                projection => new EmployeeDTO()
                 {
                     email = projection.email,
                     fullName = projection.full_name,
                     team_id = projection.team_id,
                     role = projection.role,
                     picture = projection.picture,
-                    auth_id = projection.auth_id
-                    // Add certifications in the future
-                }
+                    auth_id = projection.auth_id,
+                    certifications = projection.certifications
+                }                
             ).FirstOrDefault();
             if (user is null)
             {

@@ -1,4 +1,6 @@
 using System.Text.Json.Serialization;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
 
 namespace cr_app_webapi.Models
 {
@@ -14,6 +16,7 @@ namespace cr_app_webapi.Models
         public string? description { get; set; }
         public string? expiration { get; set; }
         public Badge? badge { get; set; }
+        public string teamMemberAuthId {get; set;} = default!;
     }
     public record Badge(string imageUrl, string name);
 }

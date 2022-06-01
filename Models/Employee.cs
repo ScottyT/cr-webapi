@@ -21,8 +21,11 @@ public class Employee : Document
     public string? role { get; set; }
     // Might change certifications to be defined as Certification type
     //public List<string>? certifications_id { get; init; }
+    /* [BsonRepresentation(BsonType.ObjectId)]
+    public string[] certificationIds {get; set;} */
+    public List<Certification> certifications {get; set;} = default!;
     public string? picture { get; set; }
-    public string? auth_id {get; set;}
+    public string auth_id {get; set;} = default!;
 
     // public List<Object> UserReports {get; set;} = new List<Object>();
 }

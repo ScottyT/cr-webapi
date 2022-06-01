@@ -1,3 +1,4 @@
+using cr_app_webapi.Models;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace cr_app_webapi.Dto;
@@ -12,4 +13,5 @@ public class EmployeeDTO
     public string? role {get; set;}
     public string? picture {get; set;}
     public string? auth_id {get; set;}
+    public List<Certification> certifications {get; set;} = new List<Certification>();
 }

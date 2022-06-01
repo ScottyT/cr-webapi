@@ -75,7 +75,7 @@ public class ReportsController : ControllerBase
         ).AsQueryable<Object>().FirstOrDefault();
         if (reportType == "personal-content-inventory")
         {
-            report = _contentInventory.FindAndJoin<InventoryModel>(
+            report = _contentInventory.FindAndJoin(
                 f => f.JobId == id && f.ReportType == reportType,
                 l => l.JobId, foreign => foreign.JobId, j => j.inventoryImages
             ).Cast<object>().FirstOrDefault();
@@ -94,7 +94,7 @@ public class ReportsController : ControllerBase
         }
         if (reportType.Contains("aob"))
         {
-            report = _aob.FindAndJoin<AssignmentOfBenefits>(
+            report = _aob.FindAndJoin(
                 f => f.JobId == id && f.ReportType == reportType,
                 l => l.cardNumber, foreign => foreign.cardNumber,
                 j => j.creditCard
@@ -102,7 +102,7 @@ public class ReportsController : ControllerBase
         }
         if (reportType.Contains("coc"))
         {
-            report = _coc.FindAndJoin<CertificateOfCompletion>(
+            report = _coc.FindAndJoin(
                 f => f.JobId == id && f.ReportType == reportType,
                 l => l.cardNumber, foreign => foreign.cardNumber,
                 j => j.creditCard

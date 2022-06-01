@@ -64,9 +64,9 @@ public class SketchController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create(Sketch newSketch)
+    public IActionResult Create(Sketch newSketch)
     {
-        await _sketchRepo.InsertOneAsync(newSketch);
+        var result = _sketchRepo.InsertOneAsync(filter => filter.Id == newSketch.Id, newSketch);
         return CreatedAtAction(nameof(Get), new { id = newSketch.Id }, "Successfully created Sketch!");
     }
 }

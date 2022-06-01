@@ -46,13 +46,13 @@ public class GeneralHistoryController : ControllerBase
     }
 
     [HttpPost("new")]
-    public async Task<IActionResult> Create(GeneralHistory postData)
+    public IActionResult Create(GeneralHistory postData)
     {
         if (!ModelState.IsValid)
         {
             return BadRequest(ModelState);
         }
-        await _generalHistory.InsertOneAsync(postData);
+        var result = _generalHistory.InsertOneAsync(filter => filter.Id == postData.Id, postData);
 
         return CreatedAtAction(nameof(GetAll), new { id = postData.Id }, "New General History log created!");
     }

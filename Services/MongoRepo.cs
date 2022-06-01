@@ -26,8 +26,8 @@ namespace cr_app_webapi.Services
 
         private protected string GetCollectionName(Type documentType)
         {
-            return ((BsonCollectionAttribute) documentType.GetCustomAttributes(
-                typeof(BsonCollectionAttribute), 
+            return ((BsonCollectionAttribute)documentType.GetCustomAttributes(
+                typeof(BsonCollectionAttribute),
                 true
             ).FirstOrDefault()).CollectionName;
         }
@@ -42,22 +42,30 @@ namespace cr_app_webapi.Services
             return _collection.Find(filterExpression).ToEnumerable();
         }
 
-        public IEnumerable<TProjected> FilterBy<TProjected>(Expression<Func<TDocument, bool>> filterExpression, 
+        public IEnumerable<TProjected> FilterBy<TProjected>(Expression<Func<TDocument, bool>> filterExpression,
             Expression<Func<TDocument, TProjected>> projectionExpression)
         {
             return _collection.Find(filterExpression).Project(projectionExpression).As<TProjected>().ToEnumerable();
         }
-        
-        public IEnumerable<TProjected> FindAndJoin<TProjected>(Expression<Func<TDocument, bool>> matchExpression, 
+
+        public IEnumerable<TDocument> FindAndJoin(Expression<Func<TDocument, bool>> matchExpression,
             Expression<Func<TDocument, object>> localField, Expression<Func<TForeign, object>> foreignField,
-            Expression<Func<TProjected, object>> joined)
+            Expression<Func<TDocument, object>> joined)
         {
             return _collection.Aggregate().Match(matchExpression).Lookup(_foreignCollection, localField, foreignField, joined).ToEnumerable();
         }
 
+        public IEnumerable<TProjected> FindAndJoin<TProjected>(Expression<Func<TDocument, bool>> matchExpression,
+            Expression<Func<TDocument, object>> localField, Expression<Func<TForeign, object>> foreignField,
+            Expression<Func<TDocument, object>> joined, Expression<Func<TDocument, TProjected>> projectionExpression)
+        {
+            return _collection.Aggregate().Match(matchExpression).Lookup(_foreignCollection, localField, foreignField, joined)
+                .Project(projectionExpression).ToList().AsQueryable();
+        }
+
         public virtual Task<TDocument> GetOneAsync(string id)
         {
-            return Task.Run(() => 
+            return Task.Run(() =>
             {
                 var objectId = new ObjectId(id);
                 var filter = Builders<TDocument>.Filter.Eq(doc => doc.Id, id);
@@ -95,15 +103,32 @@ namespace cr_app_webapi.Services
             await _bsonCol.InsertOneAsync(doc);
         }
 
-        public async Task InsertOneAsync(TDocument document)
+        public virtual TDocument InsertOneAsync(Expression<Func<TDocument, bool>> filterExpression, TDocument document)
         {
-           await _collection.InsertOneAsync(document);
+            var time = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
+            var updateDefList = new List<UpdateDefinition<TDocument>>();
+            var updateOptions = new FindOneAndUpdateOptions<TDocument, TDocument>
+            {
+                IsUpsert = true,
+                ReturnDocument = ReturnDocument.After
+            };
+            updateDefList.Add(Builders<TDocument>.Update.Set("createdAt", time));
+            updateDefList.Add(Builders<TDocument>.Update.Set("updatedAt", time));
+            foreach (PropertyInfo field in document.GetType().GetProperties())
+            {
+                if (field.GetValue(document, null) is not null)
+                {
+                    updateDefList.Add(Builders<TDocument>.Update.Set(field.Name, field.GetValue(document, null)));
+                }
+            }
+            var update = Builders<TDocument>.Update.Combine(updateDefList);
+            return _collection.FindOneAndUpdate(filterExpression, update, updateOptions);
         }
 
         public virtual async Task GenericFindOneUpdate<TProjected>(
-            Expression<Func<TDocument, bool>> filter, TDocument document, 
-            BsonDocumentArrayFilterDefinition<BsonDocument>[]? arrFilter = null, 
-            UpdateDefinition<TDocument>? setArrUpdate = null, 
+            Expression<Func<TDocument, bool>> filter, TDocument document,
+            BsonDocumentArrayFilterDefinition<BsonDocument>[]? arrFilter = null,
+            UpdateDefinition<TDocument>? setArrUpdate = null,
             bool upsert = false, string action = "")
         {
             var time = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
@@ -118,10 +143,10 @@ namespace cr_app_webapi.Services
             {
                 document.Id = existingReport.Id;
             }
-            
+
             if (action == "")
             {
-                foreach(PropertyInfo field in document.GetType().GetProperties())
+                foreach (PropertyInfo field in document.GetType().GetProperties())
                 {
                     if (field.GetValue(document, null) is not null)
                     {
@@ -131,11 +156,13 @@ namespace cr_app_webapi.Services
             }
 
             updateDefList.Add(Builders<TDocument>.Update.Set("updatedAt", time));
-            var updateOptions = new FindOneAndUpdateOptions<TDocument, TProjected> { 
-                IsUpsert = upsert, ReturnDocument = ReturnDocument.After
+            var updateOptions = new FindOneAndUpdateOptions<TDocument, TProjected>
+            {
+                IsUpsert = upsert,
+                ReturnDocument = ReturnDocument.After
             };
             var update = Builders<TDocument>.Update.Combine(updateDefList);
-            switch(action)
+            switch (action)
             {
                 case "new":
                     updateDefList.Add(setArrUpdate!);
@@ -145,8 +172,8 @@ namespace cr_app_webapi.Services
                 case "update":
                     updateDefList.Add(setArrUpdate!);
                     update = Builders<TDocument>.Update.Combine(updateDefList);
-                    await _collection.FindOneAndUpdateAsync(filter, update, 
-                        new FindOneAndUpdateOptions<TDocument, TProjected>{ArrayFilters = arrFilter}
+                    await _collection.FindOneAndUpdateAsync(filter, update,
+                        new FindOneAndUpdateOptions<TDocument, TProjected> { ArrayFilters = arrFilter }
                     );
                     break;
                 default:
