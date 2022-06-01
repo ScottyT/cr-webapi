@@ -22,14 +22,14 @@ public interface IMongoRepo<TDocument, TForeign> where TDocument : IDocument, ne
     //Task<TDocument> GetManyAsync(IEnumerable<string> ids);
     Task BsonSaveOneAsync(string json);
     Task BsonFindOneAndUpdate(string jobid, string reportType, string json, bool upsert);
-    Task InsertOneAsync(TDocument document); // This method is just like SaveOneAsync except in takes a generic as a parameter
+    Task InsertOneAsync(TDocument document); // This method is just like SaveOneAsync except in takes a generic as a parameter. Can't do projections.
 
     // Keep the arrFilter, setArrUpdate, and action params the default unless used for Psychrometric type
     Task GenericFindOneUpdate<TProjected>(
         Expression<Func<TDocument, bool>> filter,
-        TDocument document,
-        bool upsert = false, bool project = false, string action = "", BsonDocumentArrayFilterDefinition<BsonDocument>[]? arrFilter = null,
-        UpdateDefinition<TDocument>? setArrUpdate = null
+        TDocument document, BsonDocumentArrayFilterDefinition<BsonDocument>[]? arrFilter = null,
+        UpdateDefinition<TDocument>? setArrUpdate = null,
+        bool upsert = false, string action = ""
     );
     void DeleteById(string id);
 

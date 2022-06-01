@@ -53,6 +53,19 @@ public class ReportsController : ControllerBase
         return reports;
     }
 
+    [HttpGet("{reportType}")]
+    public ActionResult<Object> GetByReportType(string reportType)
+    {
+        var reports = _report.FilterBy(
+            filter => filter.ReportType == reportType
+        ).ToList();
+        if (reports is null)
+        {
+            return NotFound();
+        }
+        return Ok(new { data = reports});
+    }
+
     [HttpGet("details/{reportType}/{id}")]
     public ActionResult<Object> GetReport(string id, string reportType)
     {
