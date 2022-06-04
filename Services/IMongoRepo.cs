@@ -27,7 +27,7 @@ public interface IMongoRepo<TDocument, TForeign> where TDocument : IDocument, ne
     //Task<TDocument> GetManyAsync(IEnumerable<string> ids);
     Task BsonSaveOneAsync(string json);
     Task BsonFindOneAndUpdate(string jobid, string reportType, string json, bool upsert);
-    TDocument InsertOneAsync(Expression<Func<TDocument, bool>> filterExpression, TDocument document); // This method is just like SaveOneAsync except in takes a generic as a parameter. Can't do projections.
+    Task InsertOneAsync(TDocument document); // This method is just like SaveOneAsync except in takes a generic as a parameter. Can't do projections.
 
     // Keep the arrFilter, setArrUpdate, and action params the default unless used for Psychrometric type
     Task GenericFindOneUpdate<TProjected>(

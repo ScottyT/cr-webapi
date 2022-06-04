@@ -40,11 +40,9 @@ public class CertificationsController : ControllerBase
     }
 
     [HttpPost("create")]
-    public IActionResult Post(Certification cert)
+    public async Task<IActionResult> Post(Certification cert)
     {
-        var newCert = _certification.InsertOneAsync(
-            filter => filter.Id == cert.Id, cert
-        );
-        return CreatedAtAction(nameof(Get), new { _id = cert.Id }, new { message = "Successfully created certification!", result = newCert});
+        await _certification.InsertOneAsync(cert);
+        return CreatedAtAction(nameof(Get), new { _id = cert.Id }, "Successfully created certification!");
     }
 }

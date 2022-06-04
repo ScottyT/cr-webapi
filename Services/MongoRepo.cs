@@ -103,26 +103,9 @@ namespace cr_app_webapi.Services
             await _bsonCol.InsertOneAsync(doc);
         }
 
-        public virtual TDocument InsertOneAsync(Expression<Func<TDocument, bool>> filterExpression, TDocument document)
+        public virtual async Task InsertOneAsync(TDocument document)
         {
-            var time = DateTime.SpecifyKind(DateTime.Now, DateTimeKind.Utc);
-            var updateDefList = new List<UpdateDefinition<TDocument>>();
-            var updateOptions = new FindOneAndUpdateOptions<TDocument, TDocument>
-            {
-                IsUpsert = true,
-                ReturnDocument = ReturnDocument.After
-            };
-            updateDefList.Add(Builders<TDocument>.Update.Set("createdAt", time));
-            updateDefList.Add(Builders<TDocument>.Update.Set("updatedAt", time));
-            foreach (PropertyInfo field in document.GetType().GetProperties())
-            {
-                if (field.GetValue(document, null) is not null)
-                {
-                    updateDefList.Add(Builders<TDocument>.Update.Set(field.Name, field.GetValue(document, null)));
-                }
-            }
-            var update = Builders<TDocument>.Update.Combine(updateDefList);
-            return _collection.FindOneAndUpdate(filterExpression, update, updateOptions);
+            await _collection.InsertOneAsync(document);
         }
 
         public virtual async Task GenericFindOneUpdate<TProjected>(
