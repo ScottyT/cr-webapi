@@ -92,7 +92,7 @@ namespace cr_app_webapi.Services
             request.AddHeader("Accept", "application/json");
             foreach(PropertyInfo field in fields)
             {
-                if (field.GetValue(updatedUser, null) is not null)
+                if (field.GetValue(updatedUser, null) is not null && field.Name != "certifications" && field.Name != "username")
                 {
                     request.AddParameter(field.Name, field.GetValue(updatedUser, null), ParameterType.RequestBody);
                 }

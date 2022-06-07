@@ -69,6 +69,14 @@ namespace cr_app_webapi
         [HttpPut("update/{id}")]
         public async Task UpdateUser(string id, Employee emp)
         {
+            AuthUser userAuth0 = new AuthUser
+            {
+                connection = "Username-Password-Authentication",
+                picture = emp.picture,
+                user_metadata = emp.user_metadata,
+                email = emp.email,
+                username = emp.username
+            };
             await _authService.UpdateUser(emp, id);
             await _userRepo.GenericFindOneUpdate<Employee>(
                 f => f.auth_id == id, emp, upsert: true
@@ -88,7 +96,7 @@ namespace cr_app_webapi
                 name = new FullName(user.fname, user.lname).Name,
                 user_metadata = new UserMetadata
                 {
-                    certifications = new List<string>(),
+                   // certifications = new List<string>(),
                     role = user.role,
                     id = user.team_id,
                     name = new FullName(user.fname, user.lname).Name

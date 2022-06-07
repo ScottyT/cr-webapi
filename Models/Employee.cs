@@ -26,6 +26,7 @@ public class Employee : Document
     public List<Certification> certifications {get; set;} = default!;
     public string? picture { get; set; }
     public string auth_id {get; set;} = default!;
+    public UserMetadata user_metadata { get; set; } = new UserMetadata();
 
     // public List<Object> UserReports {get; set;} = new List<Object>();
 }
@@ -34,6 +35,7 @@ public record struct FullName(string FirstName, string LastName)
 {
     public string Name => FirstName + " " + LastName;
 }
+// This type is used for creating users in Auth0
 [BsonIgnoreExtraElements]
 public class AuthUser
 {
@@ -43,11 +45,13 @@ public class AuthUser
     public string? password { get; set; }
     public string? username { get; set; }
     public string? name { get; set; }
-    public UserMetadata? user_metadata { get; set; }
+    public string? picture {get; set;}
+    public UserMetadata user_metadata { get; set; } = new UserMetadata();
 }
+[BsonIgnoreExtraElements]
 public class UserMetadata
 {
-    public List<string> certifications { get; set; } = new List<string>();
+    //public List<string> certifications { get; set; } = new List<string>();
     public string? role { get; set; }
     public string? id { get; set; }
     public string? name {get; set;}
