@@ -3,6 +3,9 @@ using cr_app_webapi.Models;
 using cr_app_webapi.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
+using MongoDB.Driver;
 
 namespace cr_app_webapi.Controllers;
 
@@ -12,9 +15,15 @@ namespace cr_app_webapi.Controllers;
 public class SketchController : ControllerBase
 {
     private readonly IMongoRepo<Sketch, Sketch> _sketchRepo;
+    private readonly IMongoDatabase _database;
+    private readonly IMongoCollection<BsonDocument> _bsonCol;
+    private readonly IMongoCollection<Sketch> _sketch;
 
-    public SketchController(IMongoRepo<Sketch, Sketch> sketchRepo)
+    public SketchController(ICodeRedDatabaseSettings settings, IMongoRepo<Sketch, Sketch> sketchRepo)
     {
+        _database = new MongoClient(settings.ConnectionString).GetDatabase(settings.DatabaseName);
+        _sketch = _database.GetCollection<Sketch>("sketches");
+        _bsonCol = _database.GetCollection<BsonDocument>("reports");
         _sketchRepo = sketchRepo;
     }
 

@@ -13,6 +13,5 @@ public class PsychrometricDto : Document
     public string? JobId {get; set;}
     public string? ReportType {get; set;}
     public string? formType {get; set;}
-    public TeamMember teamMember {get; set;} = new TeamMember();
     public List<JobProgress> jobProgress {get; set;} = new List<JobProgress>();
 }

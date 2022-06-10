@@ -7,7 +7,7 @@ namespace cr_app_webapi.Models;
 [BsonCollection("reports")]
 public class Psychrometric : Report
 {
-    public JobProgress jobProgress {get; set;} = new JobProgress();
+    public List<JobProgress> jobProgress {get; set;} = new List<JobProgress>();
 }
 
 
@@ -23,8 +23,8 @@ public class JobProgress
 public class Info
 {
     public double dewPoint {get; set;}
-    public int dryBulbTemp {get; set;}
-    public int humidityRatio {get; set;}
+    public double dryBulbTemp {get; set;}
+    public double humidityRatio {get; set;}
     public string? relativeHumidity {get; set;}
     public string? vaporPressure {get; set;}
 }

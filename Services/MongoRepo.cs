@@ -148,16 +148,12 @@ namespace cr_app_webapi.Services
             switch (action)
             {
                 case "new":
-                    updateDefList.Add(setArrUpdate!);
-                    update = Builders<TDocument>.Update.Combine(updateDefList);
-                    await _collection.FindOneAndUpdateAsync(filter, update, updateOptions);
+                    await _collection.InsertOneAsync(document);
                     break;
                 case "update":
                     updateDefList.Add(setArrUpdate!);
                     update = Builders<TDocument>.Update.Combine(updateDefList);
-                    await _collection.FindOneAndUpdateAsync(filter, update,
-                        new FindOneAndUpdateOptions<TDocument, TProjected> { ArrayFilters = arrFilter }
-                    );
+                    await _collection.UpdateOneAsync(filter, update);
                     break;
                 default:
                     update = Builders<TDocument>.Update.Combine(updateDefList);

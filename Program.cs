@@ -52,7 +52,6 @@ builder.WebHost.ConfigureKestrel(options =>
     );
     services.AddScoped(typeof(IMongoRepo<,>), typeof(MongoRepo<,>));
     services.AddTransient<AuthServices>();
-    services.AddTransient<ReportsService>();
     services.AddSingleton<IAuthorizationHandler, HasScopeHandler>();
     services.AddSingleton<ICodeRedDatabaseSettings>(sp =>
         sp.GetRequiredService<IOptions<CodeRedDatabaseSettings>>().Value);

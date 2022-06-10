@@ -13,8 +13,6 @@ namespace cr_app_webapi.Models
         public List<object> inventory {get; set;} = new List<object>();
         public Boolean techSig {get; set;}
         public string? cusSig {get ;set;}
-        public List<string> image_ids {get; set;} = new List<string>();
-        public IEnumerable<InventoryImage> inventoryImages {get; set;} = default!;
         public double totalAmount {get; set;}
     }
 }

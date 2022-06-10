@@ -16,23 +16,19 @@ public class ReportsController : ControllerBase
 {
     private readonly IMongoRepo<Report, Report> _report;
     private readonly IMongoRepo<Sketch, Sketch> _sketches;
-    private readonly ReportsService _reportsService;
     private readonly IMongoRepo<CertificateOfCompletion, CreditCard> _coc;
     private readonly IMongoRepo<AssignmentOfBenefits, CreditCard> _aob;
-    private readonly IMongoRepo<InventoryModel, InventoryImage> _contentInventory;
     private readonly IMongoRepo<Logging, Logging> _logging;
     private readonly IMongoRepo<MoistureModel, MoistureModel> _moistureMap;
     private readonly IMongoRepo<PsychrometricDto, Psychrometric> _psy;
 
-    public ReportsController(IMongoRepo<Report, Report> mongoReport, ReportsService reportsService, IMongoRepo<CertificateOfCompletion, CreditCard> coc,
-        IMongoRepo<AssignmentOfBenefits, CreditCard> aob, IMongoRepo<InventoryModel, InventoryImage> contentInventory, IMongoRepo<Logging, Logging> logging,
+    public ReportsController(IMongoRepo<Report, Report> mongoReport, IMongoRepo<CertificateOfCompletion, CreditCard> coc,
+        IMongoRepo<AssignmentOfBenefits, CreditCard> aob, IMongoRepo<Logging, Logging> logging,
         IMongoRepo<MoistureModel, MoistureModel> moistureMap, IMongoRepo<Sketch, Sketch> sketches, IMongoRepo<PsychrometricDto, Psychrometric> psy)
     {
         _report = mongoReport;
-        _reportsService = reportsService;
         _coc = coc;
         _aob = aob;
-        _contentInventory = contentInventory;
         _logging = logging;
         _moistureMap = moistureMap;
         _sketches = sketches;
@@ -73,13 +69,6 @@ public class ReportsController : ControllerBase
             f => f.JobId == id && f.ReportType == reportType,
             p => new { p }
         ).AsQueryable<Object>().FirstOrDefault();
-        if (reportType == "personal-content-inventory")
-        {
-            report = _contentInventory.FindAndJoin(
-                f => f.JobId == id && f.ReportType == reportType,
-                l => l.JobId, foreign => foreign.JobId, j => j.inventoryImages
-            ).Cast<object>().FirstOrDefault();
-        }
         if (reportType == "quantity-inventory-logs" || reportType == "atmospheric-readings")
         {
             report = _logging.FilterBy(
@@ -151,47 +140,34 @@ public class ReportsController : ControllerBase
     [HttpPost("psychrometric-chart/update-chart")]
     public async Task<IActionResult> CreatePsychrometric(Psychrometric report)
     {
-        var JobProgress = report.jobProgress;
         var dto = new PsychrometricDto()
         {
             JobId = report.JobId,
             ReportType = report.ReportType,
             formType = report.formType,
-            jobProgress = new List<JobProgress>()
-            {
-                JobProgress
-            }
+            jobProgress = report.jobProgress
         };
         await _psy.GenericFindOneUpdate<PsychrometricDto>(
             f => f.JobId == report.JobId && f.ReportType == report.ReportType && f.formType == report.formType,
-            dto, upsert: true, action: "new", setArrUpdate: Builders<PsychrometricDto>.Update.Push("jobProgress", JobProgress)
+            dto, upsert: true, action: "new"
         );
         return CreatedAtAction(nameof(GetAll), "Psychrometric chart has been created!");
     }
 
-    [HttpPost("psychrometric-chart/update-progress")]
+    [HttpPut("psychrometric-chart/update-progress")]
     public async Task<IActionResult> UpdatePsychrometric(Psychrometric report)
     {
-        var JobProgress = report.jobProgress;
-        var arrayFilter = new [] {
-            new BsonDocumentArrayFilterDefinition <BsonDocument> (
-                new BsonDocument("j.date", new BsonDocument("$in", new BsonArray(new [] { JobProgress!.date }))
-            ))
-        };
         var dto = new PsychrometricDto()
         {
             JobId = report.JobId,
             ReportType = report.ReportType,
             formType = report.formType,
-            jobProgress = new List<JobProgress>()
-            {
-                JobProgress
-            }
+            jobProgress = report.jobProgress
         };
-        await _psy.GenericFindOneUpdate<Psychrometric>(
+        await _psy.GenericFindOneUpdate<PsychrometricDto>(
             f => f.JobId == report.JobId && f.ReportType == report.ReportType && f.formType == report.formType,
-            dto, upsert: false, action: "update", arrFilter: arrayFilter,
-            setArrUpdate: Builders<PsychrometricDto>.Update.Set("jobProgress.$[j]", JobProgress));
+            dto, upsert: false, action: "update",setArrUpdate: Builders<PsychrometricDto>.Update.Set("jobProgress", dto.jobProgress)
+        );
         
         return CreatedAtAction(nameof(GetAll), "Psychrometric chart updated successfully!");
     }
